@@ -158,6 +158,23 @@ export default function SettingsModal({ open, onClose, settings, updateSetting, 
                   ))}
                 </div>
               </section>
+              <Accordion {...accordionProps('rules')} title="Game Rules & Variant">
+                <span className="field-label">{t('mode')}</span>
+                <ModeSelector mode={settings.mode} language={settings.language} onChange={onModeChange} disabled={modeDisabled} />
+                {modeDisabled && <small className="font-scale-hint">Change game mode in the lobby.</small>}
+                <label className="field-label" htmlFor="difficulty">{t('difficulty')}</label>
+                <select id="difficulty" className="text-input" value={settings.difficulty} onChange={(event) => updateSetting('difficulty', event.target.value)}>
+                  {['casual', 'clever', 'mastermind'].map((level) => <option key={level} value={level}>{t(level)}</option>)}
+                </select>
+                <label className="field-label" htmlFor="round-count">{t('rounds')}</label>
+                <select id="round-count" className="text-input" value={settings.rounds} onChange={(event) => updateSetting('rounds', Number(event.target.value))}>
+                  {[3, 5, 7].map((rounds) => <option value={rounds} key={rounds}>{rounds}</option>)}
+                </select>
+                <label className="field-label" htmlFor="turn-timer">{t('timer')}</label>
+                <select id="turn-timer" className="text-input" value={settings.timer} onChange={(event) => updateSetting('timer', Number(event.target.value))}>
+                  {[20, 25, 30].map((timer) => <option value={timer} key={timer}>{timer}s</option>)}
+                </select>
+              </Accordion>
               <div className="settings-selects">
                 <CustomSelect label={t('language')} value={settings.language} options={LANGUAGES.map(({ id, name }) => ({ value: id, label: LANGUAGE_ENGLISH[id] ? `${name} • ${LANGUAGE_ENGLISH[id]}` : name }))} onChange={(value) => updateSetting('language', value)} />
                 <CustomSelect label={t('theme')} value={settings.theme} options={Object.entries(THEMES).map(([id, theme]) => ({ value: id, label: t(id), color: theme.background }))} onChange={(value) => updateSetting('theme', value)} />
@@ -269,23 +286,6 @@ export default function SettingsModal({ open, onClose, settings, updateSetting, 
                 </select>
               </Accordion>
 
-              <Accordion {...accordionProps('rules')} title="Game Rules & Variant">
-                <span className="field-label">{t('mode')}</span>
-                <ModeSelector mode={settings.mode} language={settings.language} onChange={onModeChange} disabled={modeDisabled} />
-                {modeDisabled && <small className="font-scale-hint">Change game mode in the lobby.</small>}
-                <label className="field-label" htmlFor="difficulty">{t('difficulty')}</label>
-                <select id="difficulty" className="text-input" value={settings.difficulty} onChange={(event) => updateSetting('difficulty', event.target.value)}>
-                  {['casual', 'clever', 'mastermind'].map((level) => <option key={level} value={level}>{t(level)}</option>)}
-                </select>
-                <label className="field-label" htmlFor="round-count">{t('rounds')}</label>
-                <select id="round-count" className="text-input" value={settings.rounds} onChange={(event) => updateSetting('rounds', Number(event.target.value))}>
-                  {[3, 5, 7].map((rounds) => <option value={rounds} key={rounds}>{rounds}</option>)}
-                </select>
-                <label className="field-label" htmlFor="turn-timer">{t('timer')}</label>
-                <select id="turn-timer" className="text-input" value={settings.timer} onChange={(event) => updateSetting('timer', Number(event.target.value))}>
-                  {[20, 25, 30].map((timer) => <option value={timer} key={timer}>{timer}s</option>)}
-                </select>
-              </Accordion>
             </div>
             <footer className="modal-footer">
               <span className="saved-hint">{t('autoSaved')}</span>
