@@ -56,6 +56,7 @@ export function createGame(playerDefs = DEFAULT_PLAYER_DEFS, options = {}) {
     privatePeekQueue: [],
     guessedPlayerId: null,
     guessWasCorrect: null,
+    isComplete: false,
   }
 }
 
@@ -97,8 +98,18 @@ function revealRole(state, phase, role, nextPhase) {
 }
 
 function finishGuess(state, playerId) {
+  return {
+    ...state,
+    phase: 'reveal-accused',
+    revealedPlayers: [...state.revealedPlayers, playerId],
+    guessedPlayerId: playerId,
+    guessWasCorrect: playerId === state.roles[ROLE.CHOR],
+  }
+}
+
+function scoreGuess(state) {
   const chorId = state.roles[ROLE.CHOR]
-  const wasCorrect = playerId === chorId
+  const wasCorrect = state.guessWasCorrect
   const sipahiId = state.roles[ROLE.SIPAHI]
   const updatedPlayers = state.players.map((player) => {
     const role = Object.keys(state.roles).find((key) => state.roles[key] === player.id)
@@ -114,9 +125,6 @@ function finishGuess(state, playerId) {
     phase: 'result',
     isComplete: isFinalRound,
     players: updatedPlayers,
-    revealedPlayers: state.players.map(({ id }) => id),
-    guessedPlayerId: playerId,
-    guessWasCorrect: wasCorrect,
   }
 }
 
@@ -148,6 +156,7 @@ export function gameReducer(state, action) {
         privatePeekQueue: state.players.filter(({ human }) => human).map(({ id }) => id),
         guessedPlayerId: null,
         guessWasCorrect: null,
+        isComplete: false,
       }
     }
     case 'PEEK_PRIVATE': {
@@ -160,11 +169,20 @@ export function gameReducer(state, action) {
       }
     }
     case 'REVEAL_KING':
-      return revealRole(state, 'reveal-king', ROLE.RAJA, state.roles?.[ROLE.RANI] ? 'reveal-rani' : 'reveal-sipahi')
+      return revealRole(state, 'reveal-king', ROLE.RAJA, 'king-revealed')
     case 'REVEAL_RANI':
-      return revealRole(state, 'reveal-rani', ROLE.RANI, 'reveal-sipahi')
+      return revealRole(state, 'reveal-rani', ROLE.RANI, 'rani-revealed')
     case 'REVEAL_SIPAHI':
-      return revealRole(state, 'reveal-sipahi', ROLE.SIPAHI, 'chant')
+      return revealRole(state, 'reveal-sipahi', ROLE.SIPAHI, 'sipahi-revealed')
+    case 'ADVANCE_REVEAL':
+      if (state.phase === 'king-revealed') return { ...state, phase: state.roles?.[ROLE.RANI] ? 'reveal-rani' : 'reveal-sipahi' }
+      if (state.phase === 'rani-revealed') return { ...state, phase: 'reveal-sipahi' }
+      if (state.phase === 'sipahi-revealed') return { ...state, phase: 'chant' }
+      if (state.phase === 'reveal-accused') {
+        return { ...state, phase: 'reveal-remaining', revealedPlayers: state.players.map(({ id }) => id) }
+      }
+      if (state.phase === 'reveal-remaining') return scoreGuess(state)
+      return state
     case 'BEGIN_INVESTIGATION':
       return state.phase === 'chant' ? { ...state, phase: 'guess' } : state
     case 'GUESS': {
@@ -187,7 +205,10 @@ export function gameReducer(state, action) {
       }
     }
     case 'RESTART':
-      return createGame()
+      return {
+        ...createGame(action.players ?? state.players, { roundLimit: action.roundLimit ?? state.roundLimit, mode: action.mode ?? state.mode }),
+        difficulty: action.difficulty ?? state.difficulty,
+      }
     default:
       return state
   }

@@ -51,6 +51,8 @@ export default function LobbyPanel({
             className={`mode-card${settings.mode === id ? ' selected' : ''}`}
             key={id}
             onClick={() => updateSetting('mode', id)}
+            aria-pressed={settings.mode === id}
+            title={t(id)}
           >
             <Icon size={16} />
             <span>{t(id)}</span>

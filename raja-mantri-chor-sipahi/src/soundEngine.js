@@ -8,6 +8,7 @@ export class SoundEngine {
       this.master.connect(this.context.destination)
     }
     this.ambientNodes = []
+    this.chantNodes = []
   }
 
   async activate() {
@@ -35,6 +36,7 @@ export class SoundEngine {
       cage: { notes: [392, 196, 146.83, 110], type: 'triangle', spacing: 0.035, duration: 0.42, gain: 0.065 },
       coins: { notes: [987.77, 1318.51, 1567.98, 1174.66, 1760], type: 'sine', spacing: 0.07, duration: 0.18, gain: 0.04 },
     }
+
     const sound = sounds[name] ?? sounds.correct
     const start = this.context.currentTime
     sound.notes.forEach((frequency, index) => {
@@ -56,6 +58,40 @@ export class SoundEngine {
       oscillator.start(at)
       oscillator.stop(at + sound.duration + 0.02)
     })
+  }
+
+  playChant(volume = 0.55, fallback = false) {
+    if (!this.context || !this.master) return
+    this.stopChant()
+    this.setVolume(volume)
+    const now = this.context.currentTime
+    const notes = fallback
+      ? [[0, 130], [0.24, 185], [0.48, 130], [0.72, 185], [0.96, 330], [1.24, 440], [1.52, 660]]
+      : [[0, 130], [0.24, 185], [0.48, 130], [0.72, 185], [1.0, 130], [1.24, 185], [1.5, 130]]
+    notes.forEach(([offset, frequency]) => {
+      const oscillator = this.context.createOscillator()
+      const gain = this.context.createGain()
+      const at = now + offset
+      oscillator.type = frequency > 200 ? 'triangle' : 'sine'
+      oscillator.frequency.setValueAtTime(frequency, at)
+      oscillator.frequency.exponentialRampToValueAtTime(frequency * 0.65, at + 0.16)
+      gain.gain.setValueAtTime(0.0001, at)
+      gain.gain.exponentialRampToValueAtTime(0.08, at + 0.015)
+      gain.gain.exponentialRampToValueAtTime(0.0001, at + 0.2)
+      oscillator.connect(gain)
+      gain.connect(this.master)
+      oscillator.start(at)
+      oscillator.stop(at + 0.22)
+      this.chantNodes.push({ oscillator, gain })
+    })
+  }
+
+  stopChant() {
+    this.chantNodes.forEach(({ oscillator, gain }) => {
+      oscillator.disconnect()
+      gain.disconnect()
+    })
+    this.chantNodes = []
   }
 
   startAmbient(volume = 0.55) {
@@ -86,6 +122,7 @@ export class SoundEngine {
   async close() {
     if (!this.context) return
     this.stopAmbient()
+    this.stopChant()
     await this.context.close()
   }
 }

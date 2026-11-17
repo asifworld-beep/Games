@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
 import { Html } from '@react-three/drei'
 import { Bloom, EffectComposer, Vignette } from '@react-three/postprocessing'
-import { CanvasTexture, Color, MathUtils, Object3D, SRGBColorSpace, Vector3 } from 'three'
+import { BoxGeometry, CanvasTexture, Color, CylinderGeometry, MathUtils, MeshStandardMaterial, Object3D, SphereGeometry, SRGBColorSpace, Vector3 } from 'three'
 import PlayerTotem from './components/PlayerTotem.jsx'
 import { THEMES } from './config/themes.js'
 
@@ -182,7 +182,7 @@ function CameraTransition({ phase, focusSeat, cue, playerCount }) {
   useFrame(({ camera, clock, size }, delta) => {
     const position = responsivePosition.current
     const target = responsiveTarget.current
-    const shouldFocus = ['reveal-king', 'reveal-rani', 'reveal-sipahi', 'chant', 'guess'].includes(phase)
+    const shouldFocus = ['reveal-king', 'king-revealed', 'reveal-rani', 'rani-revealed', 'reveal-sipahi', 'sipahi-revealed', 'chant', 'guess'].includes(phase)
     const pose = shouldFocus && focusSeat
       ? SEAT_POSES[focusSeat] ?? CAMERA_POSES.overview
       : CAMERA_POSES.overview
@@ -237,17 +237,25 @@ function SeatAnchorProjector({ players, seatAnchorRefs, phase, rolesByPlayer, re
   return null
 }
 
-function InspectBeam({ from, to }) {
+function InspectBeam({ from, to, sweepTo }) {
   const beam = useRef(null)
   const start = useMemo(() => new Vector3(), [])
   const end = useMemo(() => new Vector3(), [])
   const direction = useMemo(() => new Vector3(), [])
   const midpoint = useMemo(() => new Vector3(), [])
+  const sweepEnd = useMemo(() => new Vector3(), [])
+  const startedAt = useRef(null)
 
-  useFrame(() => {
+  useFrame(({ clock }) => {
     if (!beam.current) return
+    if (startedAt.current === null) startedAt.current = clock.elapsedTime
     start.set(from[0], from[1], from[2])
     end.set(to[0], to[1], to[2])
+    if (sweepTo) {
+      const progress = Math.min((clock.elapsedTime - startedAt.current) / 1.8, 1)
+      const sweep = (1 - Math.cos(progress * Math.PI * 4)) / 2
+      end.lerp(sweepEnd.set(...sweepTo), sweep)
+    }
     direction.subVectors(end, start)
     const length = direction.length()
     midpoint.addVectors(start, end).multiplyScalar(0.5)
@@ -261,6 +269,37 @@ function InspectBeam({ from, to }) {
       <cylinderGeometry args={[0.018, 0.018, 1, 8]} />
       <meshBasicMaterial color="#ffd47a" transparent opacity={0.46} depthWrite={false} />
     </mesh>
+  )
+}
+
+function PalaceBackdrop({ theme }) {
+  const resources = useMemo(() => ({
+    column: new CylinderGeometry(0.13, 0.18, 2.4, 6),
+    beam: new BoxGeometry(1.7, 0.18, 0.28),
+    roof: new CylinderGeometry(0.18, 1.2, 0.7, 8),
+    dome: new SphereGeometry(0.55, 10, 6, 0, Math.PI * 2, 0, Math.PI / 2),
+    slit: new BoxGeometry(0.12, 0.45, 0.08),
+    stone: new MeshStandardMaterial({ color: theme.tableTop, roughness: 1 }),
+    trim: new MeshStandardMaterial({ color: theme.table, roughness: 1 }),
+    glow: new MeshStandardMaterial({ color: theme.lantern, emissive: theme.lantern, emissiveIntensity: 0.32 }),
+  }), [theme])
+  useEffect(() => () => Object.values(resources).forEach((resource) => resource.dispose()), [resources])
+
+  return (
+    <group>
+      {Array.from({ length: 10 }, (_, index) => {
+        const angle = index * Math.PI * 2 / 10
+        return (
+          <group key={index} position={[Math.sin(angle) * 8.4, -0.15, Math.cos(angle) * 8.4]} rotation={[0, angle, 0]}>
+            {[-0.72, 0.72].map((x) => <mesh key={x} position={[x, 1.2, 0]} geometry={resources.column} material={resources.stone} />)}
+            <mesh position={[0, 2.38, 0]} geometry={resources.beam} material={resources.trim} />
+            <mesh position={[0, 2.7, 0]} geometry={resources.roof} material={resources.stone} />
+            <mesh position={[0, 1.25, -0.15]} geometry={resources.slit} material={resources.glow} />
+            {index % 2 === 0 && <mesh position={[0, 3.05, 0]} geometry={resources.dome} material={resources.trim} />}
+          </group>
+        )
+      })}
+    </group>
   )
 }
 
@@ -397,6 +436,7 @@ function Courtyard({ theme, quality }) {
       <ambientLight intensity={theme.ambient} />
       <directionalLight position={[4, 8, 3]} intensity={theme.directional} castShadow={quality === 'high'} />
       <pointLight ref={lantern} position={[-4, 3, -3]} intensity={theme.lanternIntensity} color={theme.lantern} distance={12} />
+      <PalaceBackdrop theme={theme} />
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.22, 0]} receiveShadow>
         <circleGeometry args={[6.3, 64]} />
         <meshStandardMaterial color={theme.ground} roughness={0.94} />
@@ -466,6 +506,8 @@ export default function CourtyardScene({
   speechBubbles = [],
   canGuess = false,
   guessablePlayerIds = [],
+  suspectPlayerIds = [],
+  guessedPlayerId = null,
   roleLabels = {},
   onReveal,
   onGuess,
@@ -478,9 +520,13 @@ export default function CourtyardScene({
   const rajaPlayer = players.find(({ id }) => rolesByPlayer[id] === 'raja')
   const sipahiPlayer = players.find(({ id }) => rolesByPlayer[id] === 'sipahi')
   const hoveredPlayer = players.find(({ id }) => id === hoveredPlayerId)
+  const botCandidates = suspectPlayerIds.map((id) => players.find((player) => player.id === id)).filter(Boolean)
+  const botThinking = phase === 'guess' && sipahiPlayer && !sipahiPlayer.human && botCandidates.length === 2
   const rajaPosition = rajaPlayer ? SEAT_POSITIONS[rajaPlayer.seat] : null
-  const steal = phase === 'result' && !guessWasCorrect
+  const outcomePhase = ['reveal-accused', 'reveal-remaining', 'result'].includes(phase)
+  const steal = outcomePhase && !guessWasCorrect
   const chorPlayer = players.find(({ id }) => rolesByPlayer[id] === 'chor')
+    ?? (steal ? players.find(({ id }) => suspectPlayerIds.includes(id) && id !== guessedPlayerId) : null)
   const sipahiPosition = sipahiPlayer ? SEAT_POSITIONS[sipahiPlayer.seat] : null
   const chorPosition = chorPlayer ? SEAT_POSITIONS[chorPlayer.seat] : null
   const coinStart = sipahiPosition
@@ -523,7 +569,7 @@ export default function CourtyardScene({
         const queenLift = role === 'rani' && publiclyRevealed ? 0.28 : 0
         const elevation = rankLift + kingLift + queenLift
         const bubble = speechBubbles.find(({ playerId }) => playerId === player.id)
-        const outcome = phase === 'result' && role === 'chor'
+        const outcome = outcomePhase && role === 'chor'
           ? guessWasCorrect ? 'caught' : 'escaped'
           : null
         const interactive = canGuess && guessablePlayerIds.includes(player.id)
@@ -539,7 +585,7 @@ export default function CourtyardScene({
               elevation={elevation}
               phase={phase}
               outcome={outcome}
-              outcomeKey={phase === 'result' ? `${roundNumber}-${guessWasCorrect}` : ''}
+              outcomeKey={outcomePhase ? `${roundNumber}-${guessWasCorrect}` : ''}
               interactive={interactive}
               onClick={() => onGuess?.(player.id)}
               onInspect={(id) => setHoveredPlayerId(id === player.id ? player.id : null)}
@@ -575,6 +621,22 @@ export default function CourtyardScene({
         <InspectBeam
           from={[sipahiPosition[0], 1.65, sipahiPosition[2]]}
           to={[SEAT_POSITIONS[hoveredPlayer.seat][0], 1.2, SEAT_POSITIONS[hoveredPlayer.seat][2]]}
+        />
+      )}
+      {botThinking && sipahiPosition && (
+        <InspectBeam
+          from={[sipahiPosition[0], 1.65, sipahiPosition[2]]}
+          to={[SEAT_POSITIONS[botCandidates[0].seat][0], 1.2, SEAT_POSITIONS[botCandidates[0].seat][2]]}
+          sweepTo={[SEAT_POSITIONS[botCandidates[1].seat][0], 1.2, SEAT_POSITIONS[botCandidates[1].seat][2]]}
+        />
+      )}
+      {phase === 'reveal-accused' && sipahiPosition && players.find(({ id }) => id === guessedPlayerId) && (
+        <InspectBeam
+          from={[sipahiPosition[0], 1.65, sipahiPosition[2]]}
+          to={(() => {
+            const position = SEAT_POSITIONS[players.find(({ id }) => id === guessedPlayerId).seat]
+            return [position[0], 1.2, position[2]]
+          })()}
         />
       )}
       {phase === 'chant' && rajaPosition && sipahiPosition && (

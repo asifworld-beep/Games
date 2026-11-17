@@ -3328,3 +3328,223 @@ h1,
 .phase-lobby .table-caption {
   display: none;
 }
+
+.realm-signature {
+  position: absolute;
+  right: 12px;
+  bottom: 10px;
+  color: rgba(222, 201, 157, 0.62);
+  font-family: var(--font-display);
+  font-size: 0.8rem;
+  font-style: italic;
+  letter-spacing: 0.04em;
+  text-shadow: 0 1px 3px #000;
+  pointer-events: none;
+}
+
+@media (max-width: 520px), (orientation: landscape) and (max-height: 520px) and (max-width: 900px) {
+  .game-shell:not(.has-action-dock) .intro-row {
+    display: none;
+  }
+
+  .game-shell:not(.has-action-dock) .player-count-picker {
+    grid-template-columns: auto minmax(0, 1fr);
+    margin: 4px 0;
+  }
+
+  .game-shell:not(.has-action-dock) .mode-card {
+    min-height: 44px;
+    flex-direction: row;
+    gap: 5px;
+    padding: 4px;
+    line-height: 1.15;
+  }
+
+  .game-shell:not(.has-action-dock) .side-panel {
+    padding: 2px 0 4px;
+  }
+
+  .game-shell:not(.has-action-dock) .lobby-setup {
+    gap: 4px;
+  }
+
+  .game-shell:not(.has-action-dock) .arena-card {
+    margin-top: 4px;
+  }
+}
+
+@media (max-width: 520px) and (orientation: portrait) {
+  .game-shell:not(.has-action-dock) .arena {
+    height: clamp(240px, calc(100dvh - 255px), 540px);
+  }
+
+  .game-shell.lobby-mode-local .arena,
+  .game-shell.lobby-mode-online .arena {
+    height: clamp(200px, calc(100dvh - 380px), 540px);
+  }
+}
+
+@media (orientation: landscape) and (max-height: 520px) and (max-width: 900px) {
+  .game-shell:not(.has-action-dock) .game-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(170px, 30%);
+    gap: 8px;
+    align-items: start;
+  }
+
+  .game-shell:not(.has-action-dock) .side-panel {
+    order: 0;
+  }
+
+  .game-shell:not(.has-action-dock) .lobby-setup {
+    display: flex;
+  }
+
+  .game-shell:not(.has-action-dock) .mode-tabs {
+    grid-template-columns: 1fr;
+  }
+
+  .game-shell:not(.has-action-dock) .mode-card {
+    justify-content: flex-start;
+    padding-inline: 10px;
+  }
+
+  .game-shell:not(.has-action-dock) .lobby-start {
+    width: 100%;
+  }
+
+  .game-shell:not(.has-action-dock) .arena {
+    height: clamp(180px, calc(100dvh - 150px), 360px);
+  }
+
+  .game-shell:not(.has-action-dock) .arena-heading {
+    height: 30px;
+  }
+}
+
+@media (min-width: 901px) {
+  .game-shell:not(.has-action-dock) .side-panel > .panel-title,
+  .game-shell:not(.has-action-dock) .side-panel > .player-list {
+    display: none;
+  }
+
+  .game-shell:not(.has-action-dock) .arena-card,
+  .game-shell:not(.has-action-dock) .side-panel {
+    align-self: start;
+  }
+}
+
+@media (min-width: 901px) and (max-height: 700px) {
+  .game-shell:not(.has-action-dock) .intro-row {
+    padding: 6px 0;
+  }
+
+  .game-shell:not(.has-action-dock) .intro-row .eyebrow,
+  .game-shell:not(.has-action-dock) .intro-copy,
+  .game-shell:not(.has-action-dock) .side-panel > .panel-title,
+  .game-shell:not(.has-action-dock) .side-panel > .player-list,
+  .game-shell:not(.has-action-dock) .side-panel > .privacy-note,
+  .game-shell:not(.has-action-dock) .lobby-setup > .eyebrow,
+  .game-shell:not(.has-action-dock) .mode-description {
+    display: none;
+  }
+
+  .game-shell:not(.has-action-dock) h1 {
+    margin: 0;
+    font-size: 1.8rem;
+  }
+
+  .game-shell:not(.has-action-dock) .arena-card {
+    align-self: start;
+  }
+
+  .game-shell:not(.has-action-dock) .side-panel {
+    align-self: start;
+  }
+
+  .game-shell:not(.has-action-dock) .lobby-setup {
+    padding: 0;
+  }
+
+  .game-shell:not(.has-action-dock) .arena {
+    height: clamp(240px, calc(100dvh - 245px), 470px);
+  }
+
+  .game-shell:not(.has-action-dock) .footer-line {
+    padding: 8px 2px;
+  }
+}
+
+.player-count-picker {
+  display: flex;
+  width: fit-content;
+}
+
+.player-count-options,
+.mode-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+}
+
+.player-count-option,
+.mode-card {
+  position: relative;
+  z-index: 0;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 4px 12px;
+  border: 0;
+  background: transparent;
+  font-size: 0.8rem;
+  line-height: 1.15;
+}
+
+.mode-card {
+  flex-direction: row;
+  gap: 5px;
+}
+
+.player-count-option::before,
+.mode-card::before {
+  position: absolute;
+  z-index: -1;
+  inset: 4px 0;
+  content: '';
+  border: 1px solid rgba(228, 213, 181, 0.18);
+  border-radius: 999px;
+  background: rgba(3, 10, 7, 0.14);
+}
+
+.player-count-option.selected,
+.mode-card.selected {
+  border: 0;
+  background: transparent;
+}
+
+.player-count-option.selected::before,
+.mode-card.selected::before {
+  border-color: rgba(214, 183, 119, 0.6);
+  background: rgba(214, 183, 119, 0.13);
+}
+
+@media (max-width: 520px) {
+  .game-shell:not(.has-action-dock) .player-count-picker {
+    width: fit-content;
+  }
+
+  .game-shell:not(.has-action-dock) .mode-card {
+    padding-inline: 8px;
+  }
+
+  .game-shell:not(.has-action-dock) .mode-card svg {
+    display: none;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 520px) and (max-width: 900px) {
+  .game-shell:not(.has-action-dock) .mode-tabs {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
