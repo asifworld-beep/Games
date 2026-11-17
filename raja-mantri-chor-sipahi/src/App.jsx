@@ -36,7 +36,7 @@ import { getDirection, translate, translateRole } from './i18n/translations.js'
 import { MultiplayerManager } from './network/multiplayerManager.js'
 import { useGameStore } from './store/useGameStore.js'
 import { SoundEngine } from './soundEngine.js'
-import { CHANTS, RANI_CALLS, prepareSpeechVoices, speakPhase, speakRoleLine, stopChantVoice } from './chantVoiceEngine.js'
+import { CHANTS, RANI_CALLS, prepareSpeechVoices, speakPhase, speakRoleLine, stopChantVoice, unlockSpeech } from './chantVoiceEngine.js'
 import { createRoundSequence } from './roundSequence.js'
 import { useShallow } from 'zustand/react/shallow'
 import './App.css'
@@ -505,6 +505,7 @@ function App() {
 
   const activateAudio = useCallback(async () => {
     try {
+      unlockSpeech()
       if (!audioEngine.current) audioEngine.current = new SoundEngine()
       const active = await audioEngine.current.activate()
       if (!active) setAudioUnavailable(true)
@@ -684,7 +685,7 @@ function App() {
     const currentSettings = settingsRef.current
     const calls = {
       'king-revealed': displayPlayerCount === 5 ? 'Meri Rani Kaun?' : 'Mera Sipahi Kaun?',
-      'rani-revealed': RANI_CALLS[currentSettings.language] ?? RANI_CALLS.en,
+      'rani-revealed': displayPlayerCount === 5 && queenId ? RANI_CALLS[currentSettings.language] ?? RANI_CALLS.en : null,
       'sipahi-revealed': displayPlayerCount === 5 ? 'Ji Maharani!' : 'Ji Maharaj!',
       chant: (CHANTS[currentSettings.language] ?? CHANTS.en)[1],
     }
@@ -701,7 +702,7 @@ function App() {
           audioEngine.current?.playRaniVoiceChime(currentSettings.volume)
           speech = speakRoleLine({ role: 'RANI', text: calls[phase], lang: currentSettings.language, volume: currentSettings.volume, onError: onVoiceError })
         } else {
-          speech = speakPhase(calls[phase], phase === 'chant' ? currentSettings.language : 'en', currentSettings.volume, onVoiceError, ({ 'king-revealed': 'raja', 'sipahi-revealed': 'sipahi' })[phase])
+          speech = speakPhase(calls[phase], phase === 'chant' ? currentSettings.language : 'en', currentSettings.volume, onVoiceError, ({ 'king-revealed': 'raja', 'sipahi-revealed': 'sipahi', chant: 'chant' })[phase])
         }
         if (phase === 'rani-revealed' && !speech) {
           console.warn('No matching female voice is available for the Rani.')
@@ -769,7 +770,7 @@ function App() {
       stopChantVoice()
       audioEngine.current?.stopChant()
     }
-  }, [displayGame.phase, displayGame.roundNumber, displayGame.sequenceId, displayGame.privatePeekOpen, activeRevealPlayer, displayPlayerCount, sipahiIsHuman, settings.mode, roomInfo?.isHost])
+  }, [displayGame.phase, displayGame.roundNumber, displayGame.sequenceId, displayGame.privatePeekOpen, activeRevealPlayer, displayPlayerCount, queenId, sipahiIsHuman, settings.mode, roomInfo?.isHost])
 
   useEffect(() => {
     const chorId = game.roles?.[ROLE.CHOR]
@@ -1180,6 +1181,17 @@ function App() {
       className={`game-shell${displayGame.phase !== 'lobby' ? ' has-action-dock' : ` lobby-mode-${settings.mode}`}${scoreboardOpen ? ' mobile-scoreboard-open' : ''}${chatOpen ? ' chat-open' : ''}`}
       dir={direction}
       style={{ '--theme-bg': (THEMES[settings.theme] ?? THEMES.sandstone).background }}
+      onPointerDownCapture={() => {
+        if (muted) return
+        if (!audioEngine.current || audioEngine.current.context?.state === 'suspended') activateAudio()
+        else {
+          try {
+            unlockSpeech()
+          } catch (error) {
+            reportAudioError('Unable to unlock speech audio.', error)
+          }
+        }
+      }}
     >
       <header className="topbar">
         <a className="brand" href="/" aria-label="Raja Mantri home">

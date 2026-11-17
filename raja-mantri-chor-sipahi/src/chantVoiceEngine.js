@@ -33,8 +33,10 @@ export const RANI_CALLS = {
 }
 
 const FEMALE = /female|woman|lekha|veena|kalpana|heera|priya|swara|neerja|aditi|raveena|zira|samantha|victoria|karen|moira|tessa|google हिन्दी/i
-const MALE = /\bmale\b|\bman\b|ravi|hemant|madhur/i
+const MALE = /\bmale\b|\bman\b|ravi|hemant|madhur|daniel|david|alex|fred|rishi/i
 const voiceCaches = new WeakMap()
+const unlockedSyntheses = new WeakSet()
+let pendingSpeech = null
 
 function availableVoices(synthesis) {
   if (!voiceCaches.has(synthesis)) {
@@ -60,15 +62,34 @@ export function prepareSpeechVoices() {
   if (window.speechSynthesis) availableVoices(window.speechSynthesis)
 }
 
+export function unlockSpeech() {
+  const synthesis = window.speechSynthesis
+  if (!synthesis || !window.SpeechSynthesisUtterance || unlockedSyntheses.has(synthesis)) return
+  if (window.navigator?.userActivation && !window.navigator.userActivation.isActive) return
+  const utterance = new window.SpeechSynthesisUtterance(' ')
+  utterance.volume = 0
+  utterance.onerror = (event) => {
+    if (event.error !== 'canceled' && event.error !== 'interrupted') {
+      unlockedSyntheses.delete(synthesis)
+      console.error('Unable to unlock speech audio:', event.error)
+    }
+  }
+  synthesis.speak(utterance)
+  unlockedSyntheses.add(synthesis)
+}
+
 export function selectChantVoice(voices, language, role) {
   const locale = CHANTS[language]?.[0] ?? (language?.includes('-') ? language : CHANTS.en[0])
   const base = locale.split('-')[0].toLowerCase()
   const matching = voices.filter((voice) => voice.lang.toLowerCase().split('-')[0] === base)
-  const preferred = role === 'rani' ? FEMALE : role === 'raja' ? MALE : null
+  const preferred = role === 'rani' ? FEMALE : ['raja', 'sipahi', 'chant'].includes(role) ? MALE : null
   const candidates = preferred ? matching.filter((voice) => preferred.test(`${voice.name ?? ''} ${voice.voiceURI ?? ''}`)) : matching
   if (role === 'rani' && !candidates.length) {
     const english = voices.filter((voice) => /^en-(in|gb|us)$/i.test(voice.lang) && FEMALE.test(`${voice.name ?? ''} ${voice.voiceURI ?? ''}`))
     return english.find((voice) => /^en-in$/i.test(voice.lang)) ?? english[0]
+  }
+  if (preferred && role !== 'rani' && !candidates.length) {
+    return voices.find((voice) => /^en-(in|gb|us)$/i.test(voice.lang) && MALE.test(`${voice.name ?? ''} ${voice.voiceURI ?? ''}`))
   }
   const choices = candidates.length ? candidates : matching
   return choices.find((voice) => voice.lang.toLowerCase() === locale.toLowerCase()) ?? choices[0]
@@ -94,6 +115,7 @@ export function speakChant(language, volume, onError) {
 }
 
 export function stopChantVoice() {
+  pendingSpeech?.cancel()
   window.speechSynthesis?.cancel()
 }
 
@@ -108,15 +130,37 @@ export function speakPhase(text, language, volume, onError, role) {
   utterance.pitch = role === 'rani' ? 1.32 : role === 'raja' ? 0.85 : role === 'sipahi' ? 0.95 : 1.05
   utterance.rate = role === 'rani' ? 0.95 : role === 'raja' ? 0.92 : role === 'sipahi' ? 1 : 0.95
   utterance.volume = volume
+  let cancel
   const done = new Promise((resolve) => {
-    utterance.onend = resolve
-    utterance.onerror = (event) => {
-      if (event.error !== 'canceled' && event.error !== 'interrupted') onError(event.error)
+    let finished = false
+    let timer
+    const finish = (error) => {
+      if (finished) return
+      finished = true
+      clearTimeout(timer)
+      if (pendingSpeech?.cancel === cancel) pendingSpeech = null
+      if (error === 'speech-start-timeout' || error === 'speech-timeout') synthesis.cancel()
+      if (error) onError(error)
       resolve()
     }
-
+    cancel = () => finish()
+    utterance.onstart = () => {
+      clearTimeout(timer)
+      timer = setTimeout(() => finish('speech-timeout'), 20000)
+    }
+    utterance.onend = () => finish()
+    utterance.onerror = (event) => {
+      finish(event.error !== 'canceled' && event.error !== 'interrupted' ? event.error : null)
+    }
+    timer = setTimeout(() => finish('speech-start-timeout'), 2500)
   })
-  synthesis.speak(utterance)
+  pendingSpeech = { cancel }
+  try {
+    synthesis.speak(utterance)
+  } catch (error) {
+    cancel()
+    throw error
+  }
   return done
 }
 

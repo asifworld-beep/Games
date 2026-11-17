@@ -33,7 +33,7 @@ Drag to orbit the courtyard, and pinch or scroll to zoom. The lobby slowly rotat
 
 The camera orbits around the center of the table without panning, with a wider field of view on narrow screens. Rani's localized call prefers a matching female voice, then an English female voice. If the device has no recognized female voice or speech synthesis, the call cannot be spoken; the procedural chime still plays when audio is enabled.
 
-The player variant is at the top of Settings. Open chat and scroll the single quick-action row from quick messages to reactions; game controls remain available above it, and round points can be expanded from the compact result.
+The player variant and Game Rules & Variant are at the top of Settings. Open chat and scroll the single quick-action row from quick messages to reactions; game controls remain available above it, and round points can be expanded from the compact result.
 
 The optional procedural music has four tracks: Royal Darbar, Moonlit Sarod & Flute, Sacred Temple, and Silent Courtyard. Music has its own volume and mute control in Settings, separate from sound effects; the top-bar speaker mutes all audio. Music ducks briefly during the chant and role reveal. Audio starts after a user interaction, and the nature track changes between daytime birds and nighttime crickets.
 

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { CHANTS, RANI_CALLS, prepareSpeechVoices, selectChantVoice, speakChant, speakPhase, speakRoleLine } from './chantVoiceEngine.js'
+import { CHANTS, RANI_CALLS, prepareSpeechVoices, selectChantVoice, speakChant, speakPhase, speakRoleLine, unlockSpeech, stopChantVoice } from './chantVoiceEngine.js'
 import { LANGUAGES } from './i18n/translations.js'
 
 test('every supported language has a chant and selects its regional voice', () => {
@@ -96,6 +96,55 @@ test('Rani prefers a matching female voice and never selects a male fallback', (
   assert.equal(selectChantVoice([female, male], 'hi', 'raja'), male)
   const fallback = { lang: 'en-US', name: 'Samantha' }
   assert.equal(selectChantVoice([male, fallback], 'hi', 'rani'), fallback)
+  assert.equal(selectChantVoice([female], 'hi', 'chant'), undefined)
+  assert.equal(selectChantVoice([female, male], 'hi', 'chant'), male)
+  assert.equal(selectChantVoice([female], 'hi', 'sipahi'), undefined)
+})
+
+test('mobile speech unlock is initiated once in the user gesture', () => {
+  const spoken = []
+  globalThis.window = {
+    SpeechSynthesisUtterance: class { constructor(text) { this.text = text } },
+    speechSynthesis: { speak: (utterance) => spoken.push(utterance) },
+  }
+  try {
+    unlockSpeech()
+    unlockSpeech()
+    assert.equal(spoken.length, 1)
+    assert.equal(spoken[0].volume, 0)
+  } finally {
+    delete globalThis.window
+  }
+})
+
+test('stalled speech reports an error and completes so chant fallback can play', async () => {
+  const originalSetTimeout = globalThis.setTimeout
+  const originalClearTimeout = globalThis.clearTimeout
+  let timeout
+  let cancelled = 0
+  const errors = []
+  globalThis.setTimeout = (callback) => { timeout = callback; return 1 }
+  globalThis.clearTimeout = () => {}
+  globalThis.window = {
+    SpeechSynthesisUtterance: class {},
+    speechSynthesis: {
+      getVoices: () => [{ lang: 'en-IN', name: 'Male Ravi' }],
+      speak: () => {},
+      cancel: () => { cancelled += 1 },
+    },
+  }
+  try {
+    const done = speakPhase('chant', 'en', 0.5, (error) => errors.push(error), 'chant')
+    timeout()
+    await done
+    assert.deepEqual(errors, ['speech-start-timeout'])
+    assert.equal(cancelled, 1)
+    stopChantVoice()
+  } finally {
+    globalThis.setTimeout = originalSetTimeout
+    globalThis.clearTimeout = originalClearTimeout
+    delete globalThis.window
+  }
 })
 
 test('voices loaded asynchronously are used for the localized Rani call', async () => {
