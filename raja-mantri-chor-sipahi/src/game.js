@@ -1,9 +1,9 @@
 export const PLAYER_DEFS = [
   { id: 'you', name: 'You', initials: 'Y', color: '#e8b85b', seat: 'south', human: true },
-  { id: 'mira', name: 'Mira', initials: 'M', color: '#d78162', seat: 'west', human: false },
-  { id: 'kabir', name: 'Kabir', initials: 'K', color: '#739b88', seat: 'north', human: false },
-  { id: 'asha', name: 'Asha', initials: 'A', color: '#8b81bc', seat: 'east', human: false },
-  { id: 'neel', name: 'Neel', initials: 'N', color: '#d5a566', seat: 'southwest', human: false },
+  { id: 'mira', name: 'Mira', initials: 'M', color: '#d78162', seat: 'west', human: false, characterStyle: 'princess', skinTone: '#dba987' },
+  { id: 'kabir', name: 'Kabir', initials: 'K', color: '#739b88', seat: 'north', human: false, characterStyle: 'scholar', skinTone: '#925c42' },
+  { id: 'asha', name: 'Asha', initials: 'A', color: '#8b81bc', seat: 'east', human: false, characterStyle: 'guard', skinTone: '#bd805e' },
+  { id: 'rohan', name: 'Rohan', initials: 'R', color: '#d5a566', seat: 'southwest', human: false, characterStyle: 'trickster', skinTone: '#653e30' },
 ]
 const PLAYER_SEAT_LAYOUTS = {
   4: ['south', 'west', 'north', 'east'],
@@ -46,6 +46,7 @@ export function createGame(playerDefs = DEFAULT_PLAYER_DEFS, options = {}) {
       ...player,
       seat: getPlayerSeat(index, playerDefs.length),
       score: 0,
+      roundPoints: 0,
     })),
     playerCount: playerDefs.length,
     investigatorRole: INVESTIGATOR_ROLE,
@@ -54,6 +55,11 @@ export function createGame(playerDefs = DEFAULT_PLAYER_DEFS, options = {}) {
     roles: null,
     revealedPlayers: [],
     privatePeekQueue: [],
+    privatePeekOpen: false,
+    targetedPlayerId: null,
+    investigationStartedAt: null,
+    investigationSeconds: 25,
+    sequenceId: null,
     guessedPlayerId: null,
     guessWasCorrect: null,
     isComplete: false,
@@ -116,7 +122,7 @@ function scoreGuess(state) {
     let points = ROLE_INFO[role]?.points ?? 0
     if (!wasCorrect && player.id === sipahiId) points = 0
     if (!wasCorrect && player.id === chorId) points += ROLE_INFO[ROLE.SIPAHI].points
-    return { ...player, score: player.score + points }
+    return { ...player, score: player.score + points, roundPoints: points }
   })
 
   const isFinalRound = state.roundNumber >= state.roundLimit
@@ -145,27 +151,44 @@ export function gameReducer(state, action) {
       if (state.roundNumber >= state.roundLimit) return state
       return {
         ...state,
-        phase: state.players.some(({ human }) => human) ? 'private-peek' : 'reveal-king',
+        phase: 'shuffle',
         roundNumber: state.roundNumber + 1,
+        players: state.players.map((player) => ({ ...player, roundPoints: 0 })),
         playerCount: state.players.length,
         investigatorRole: INVESTIGATOR_ROLE,
         suspectRoles: [...SUSPECT_ROLES],
-        suspectPlayerIds: [action.roles[ROLE.MANTRI], action.roles[ROLE.CHOR]],
+        suspectPlayerIds: state.players
+          .filter(({ id }) => id === action.roles[ROLE.MANTRI] || id === action.roles[ROLE.CHOR])
+          .map(({ id }) => id),
         roles: action.roles,
         revealedPlayers: [],
         privatePeekQueue: state.players.filter(({ human }) => human).map(({ id }) => id),
+        privatePeekOpen: false,
+        targetedPlayerId: null,
+        investigationStartedAt: null,
+        investigationSeconds: action.investigationSeconds ?? 25,
+        sequenceId: action.sequenceId,
         guessedPlayerId: null,
         guessWasCorrect: null,
         isComplete: false,
       }
     }
+    case 'FINISH_SHUFFLE':
+      return state.phase === 'shuffle'
+        ? { ...state, phase: state.privatePeekQueue.length ? 'private-peek' : 'reveal-king' }
+        : state
+    case 'OPEN_PRIVATE':
+      return state.phase === 'private-peek' && state.privatePeekQueue[0] === action.playerId && !state.privatePeekOpen
+        ? { ...state, privatePeekOpen: true }
+        : state
     case 'PEEK_PRIVATE': {
-      if (state.phase !== 'private-peek' || state.privatePeekQueue[0] !== action.playerId) return state
+      if (state.phase !== 'private-peek' || !state.privatePeekOpen || state.privatePeekQueue[0] !== action.playerId) return state
       const privatePeekQueue = state.privatePeekQueue.slice(1)
       return {
         ...state,
         phase: privatePeekQueue.length ? 'private-peek' : 'reveal-king',
         privatePeekQueue,
+        privatePeekOpen: false,
       }
     }
     case 'REVEAL_KING':
@@ -184,7 +207,11 @@ export function gameReducer(state, action) {
       if (state.phase === 'reveal-remaining') return scoreGuess(state)
       return state
     case 'BEGIN_INVESTIGATION':
-      return state.phase === 'chant' ? { ...state, phase: 'guess' } : state
+      return state.phase === 'chant' ? { ...state, phase: 'guess', investigationStartedAt: action.startedAt } : state
+    case 'SELECT_SUSPECT':
+      return state.phase === 'guess' && state.suspectPlayerIds.includes(action.playerId)
+        ? { ...state, targetedPlayerId: action.playerId }
+        : state
     case 'GUESS': {
       if (state.phase !== 'guess' || !state.roles) return state
       const eligibleIds = [state.roles[ROLE.MANTRI], state.roles[ROLE.CHOR]]
@@ -198,6 +225,7 @@ export function gameReducer(state, action) {
       return {
         ...state,
         privatePeekQueue,
+        privatePeekOpen: state.privatePeekQueue[0] === action.playerId ? false : state.privatePeekOpen,
         phase: state.phase === 'private-peek' && privatePeekQueue.length === 0 ? 'reveal-king' : state.phase,
         players: state.players.map((player) => player.id === action.playerId
           ? { ...player, name: `${player.name} (Bot)`, human: false }

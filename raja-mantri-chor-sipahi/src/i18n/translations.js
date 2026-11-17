@@ -1211,6 +1211,70 @@ Object.assign(TRANSLATIONS, Object.fromEntries(
     ]),
 ))
 
+const ARREST_LABELS = {
+  en: 'Arrest suspect', hi: 'संदिग्ध को पकड़ें', hinglish: 'Suspect ko pakdo',
+  bn: 'সন্দেহভাজনকে ধরুন', te: 'అనుమానితుడిని పట్టుకోండి', mr: 'संशयिताला पकडा',
+  ta: 'சந்தேக நபரைப் பிடி', gu: 'શંકાસ્પદને પકડો', kn: 'ಶಂಕಿತನನ್ನು ಹಿಡಿಯಿರಿ',
+  ml: 'സംശയിക്കുന്നയാളെ പിടിക്കുക', pa: 'ਸ਼ੱਕੀ ਨੂੰ ਫੜੋ', or: 'ସନ୍ଦିଗ୍ଧଙ୍କୁ ଧରନ୍ତୁ',
+  ur: 'مشتبہ کو پکڑیں', bho: 'संदिग्ध के पकड़ीं',
+}
+const MEMORIZING_LABELS = {
+  en: 'Memorizing your role…', hi: 'अपनी भूमिका याद रखें…', hinglish: 'Apna role yaad karein…',
+  bn: 'নিজের পরিচয় মনে রাখুন…', te: 'మీ పాత్రను గుర్తుంచుకోండి…', mr: 'आपली भूमिका लक्षात ठेवा…',
+  ta: 'உங்கள் பாத்திரத்தை நினைவில் கொள்ளுங்கள்…', gu: 'તમારી ભૂમિકા યાદ રાખો…',
+  kn: 'ನಿಮ್ಮ ಪಾತ್ರವನ್ನು ನೆನಪಿಡಿ…', ml: 'നിങ്ങളുടെ വേഷം ഓർക്കുക…',
+  pa: 'ਆਪਣੀ ਭੂਮਿਕਾ ਯਾਦ ਰੱਖੋ…', or: 'ନିଜ ଭୂମିକା ମନେ ରଖନ୍ତୁ…',
+  ur: 'اپنا کردار یاد رکھیں…', bho: 'अपन भूमिका याद रखीं…',
+}
+const LEADERBOARD_LABELS = {
+  en: ['Leaderboard', 'Round', 'Total'],
+  hi: ['अंक तालिका', 'राउंड', 'कुल'],
+  hinglish: ['Leaderboard', 'Round', 'Kul'],
+  bn: ['স্কোর তালিকা', 'রাউন্ড', 'মোট'],
+  te: ['స్కోరు పట్టిక', 'రౌండ్', 'మొత్తం'],
+  mr: ['गुणतालिका', 'फेरी', 'एकूण'],
+  ta: ['மதிப்பெண் பட்டியல்', 'சுற்று', 'மொத்தம்'],
+  gu: ['સ્કોર યાદી', 'રાઉન્ડ', 'કુલ'],
+  kn: ['ಅಂಕಪಟ್ಟಿ', 'ಸುತ್ತು', 'ಒಟ್ಟು'],
+  ml: ['സ്കോർ പട്ടിക', 'റൗണ്ട്', 'ആകെ'],
+  pa: ['ਅੰਕ ਸੂਚੀ', 'ਰਾਊਂਡ', 'ਕੁੱਲ'],
+  or: ['ସ୍କୋର ତାଲିକା', 'ରାଉଣ୍ଡ', 'ମୋଟ'],
+  ur: ['اسکور بورڈ', 'راؤنڈ', 'کل'],
+  bho: ['अंक तालिका', 'दौर', 'कुल'],
+}
+const THEME_LABELS = {
+  en: ['Golden Dawn Courtyard', 'Sunlit Himalayan Valley', 'Monsoon Emerald Village', 'Royal Sandstone Twilight', 'Moonlit Mountain Citadel'],
+  hi: ['सुनहरी भोर का आंगन', 'धूप भरी हिमालय घाटी', 'मानसून का हरा गांव', 'शाही बलुआ पत्थर की सांझ', 'चांदनी पर्वत किला'],
+  hinglish: ['Golden Dawn Courtyard', 'Sunlit Himalayan Valley', 'Monsoon Emerald Village', 'Royal Sandstone Twilight', 'Moonlit Mountain Citadel'],
+  bn: ['সোনালি ভোরের উঠোন', 'রৌদ্রোজ্জ্বল হিমালয় উপত্যকা', 'বর্ষার সবুজ গ্রাম', 'রাজকীয় বেলেপাথরের সন্ধ্যা', 'চাঁদের আলোয় পাহাড়ি দুর্গ'],
+  te: ['బంగారు ఉదయపు ప్రాంగణం', 'ఎండల హిమాలయ లోయ', 'వానాకాలపు పచ్చని గ్రామం', 'రాజ ఇసుకరాతి సంధ్య', 'వెన్నెల కొండ కోట'],
+  mr: ['सुवर्ण पहाटेचे अंगण', 'सूर्यप्रकाशित हिमालयाची दरी', 'पावसाळी हिरवे गाव', 'राजेशाही वाळूशिळेची सांज', 'चांदण्यातला डोंगरी किल्ला'],
+  ta: ['பொன் விடியல் முற்றம்', 'சூரிய ஒளி இமயமலை பள்ளத்தாக்கு', 'மழைக்கால பசுமை கிராமம்', 'அரச மணற்கல் அந்தி', 'நிலவொளி மலைக்கோட்டை'],
+  gu: ['સોનેરી પરોઢનું આંગણું', 'સૂર્યપ્રકાશિત હિમાલયની ખીણ', 'ચોમાસાનું લીલું ગામ', 'શાહી રેતીપથ્થરની સાંજ', 'ચાંદની પર્વત કિલ્લો'],
+  kn: ['ಚಿನ್ನದ ಮುಂಜಾನೆಯ ಅಂಗಳ', 'ಬಿಸಿಲಿನ ಹಿಮಾಲಯ ಕಣಿವೆ', 'ಮಳೆಗಾಲದ ಹಸಿರು ಹಳ್ಳಿ', 'ರಾಜ ಮರಳುಗಲ್ಲಿನ ಸಂಧ್ಯೆ', 'ಚಂದಿರನ ಬೆಳಕಿನ ಬೆಟ್ಟದ ಕೋಟೆ'],
+  ml: ['പൊൻപുലരി മുറ്റം', 'സൂര്യപ്രകാശമുള്ള ഹിമാലയ താഴ്വര', 'മഴക്കാല പച്ച ഗ്രാമം', 'രാജകീയ മണൽക്കല്ല് സന്ധ്യ', 'നിലാവിലെ മലക്കോട്ട'],
+  pa: ['ਸੁਨਹਿਰੀ ਸਵੇਰ ਦਾ ਵਿਹੜਾ', 'ਧੁੱਪ ਵਾਲੀ ਹਿਮਾਲਿਆ ਘਾਟੀ', 'ਮੌਨਸੂਨ ਦਾ ਹਰਾ ਪਿੰਡ', 'ਸ਼ਾਹੀ ਪੱਥਰ ਦੀ ਸ਼ਾਮ', 'ਚਾਨਣੀ ਪਹਾੜੀ ਕਿਲ੍ਹਾ'],
+  or: ['ସୁନେଲି ସକାଳ ଅଗଣା', 'ଖରାଭରା ହିମାଳୟ ଉପତ୍ୟକା', 'ବର୍ଷାର ସବୁଜ ଗାଁ', 'ରାଜକୀୟ ପଥର ସନ୍ଧ୍ୟା', 'ଜହ୍ନ ଆଲୁଅର ପାହାଡ଼ ଦୁର୍ଗ'],
+  ur: ['سنہری صبح کا صحن', 'دھوپ بھری ہمالیائی وادی', 'برسات کا سرسبز گاؤں', 'شاہی پتھر کی شام', 'چاندنی پہاڑی قلعہ'],
+  bho: ['सुनहरा भोर के आंगन', 'धूप वाला हिमालय घाटी', 'बरखा के हरियर गांव', 'शाही पत्थर के सांझ', 'चांदनी पहाड़ी किला'],
+}
+for (const [language, labels] of Object.entries(THEME_LABELS)) {
+  const [dawn, himalayan, emerald, sandstone, sapphire] = labels
+  Object.assign(language === 'en' ? ENGLISH : TRANSLATIONS[language], { dawn, himalayan, emerald, sandstone, sapphire })
+}
+ENGLISH.arrestSuspect = ARREST_LABELS.en
+ENGLISH.memorizing = MEMORIZING_LABELS.en
+const [leaderboard, roundPoints, totalScore] = LEADERBOARD_LABELS.en
+Object.assign(ENGLISH, { leaderboard, roundPoints, totalScore })
+for (const [language, label] of Object.entries(ARREST_LABELS)) {
+  if (language !== 'en') {
+    TRANSLATIONS[language].arrestSuspect = label
+    TRANSLATIONS[language].memorizing = MEMORIZING_LABELS[language]
+    const [leaderboardLabel, roundLabel, totalLabel] = LEADERBOARD_LABELS[language]
+    Object.assign(TRANSLATIONS[language], { leaderboard: leaderboardLabel, roundPoints: roundLabel, totalScore: totalLabel })
+  }
+}
+
 export function translate(language, key) {
   return TRANSLATIONS[language]?.[key] ?? ENGLISH[key] ?? key
 }

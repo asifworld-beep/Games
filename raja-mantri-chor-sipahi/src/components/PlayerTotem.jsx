@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useFrame } from '@react-three/fiber'
-import { Color, MathUtils, Object3D } from 'three'
+import { MathUtils, Object3D } from 'three'
 
 const GOLD = '#e8c66f'
 const CRIMSON = '#a83232'
@@ -152,16 +152,16 @@ function GuardAccessories() {
 function ThiefAccessories() {
   return (
     <>
-      <mesh position={[0, 1.34, 0]} scale={[1.15, 1.28, 1.08]} castShadow>
-        <sphereGeometry args={[0.32, 12, 10]} />
+      <mesh position={[0, 1.39, -0.02]} scale={[1.05, 0.45, 1]} castShadow>
+        <sphereGeometry args={[0.32, 16, 12]} />
         <meshStandardMaterial color="#292b4a" roughness={0.75} />
       </mesh>
-      <mesh position={[0, 1.33, 0.24]} castShadow>
-        <boxGeometry args={[0.52, 0.16, 0.09]} />
+      <mesh position={[0, 1.12, 0.27]} castShadow>
+        <boxGeometry args={[0.48, 0.12, 0.06]} />
         <meshStandardMaterial color="#17192b" roughness={0.62} />
       </mesh>
       {[-1, 1].map((side) => (
-        <mesh key={side} position={[side * 0.12, 1.34, 0.294]}>
+        <mesh key={side} position={[side * 0.11, 1.12, 0.307]}>
           <sphereGeometry args={[0.035, 8, 6]} />
           <meshBasicMaterial color="#e2bb70" />
         </mesh>
@@ -181,6 +181,99 @@ function ThiefAccessories() {
         </mesh>
       </group>
     </>
+  )
+}
+
+export function HumanCharacter({ color, skinTone = '#bd805e', characterStyle = 'prince', dealing = false }) {
+  const head = useRef(null)
+  const eyes = useRef([])
+  const arms = useRef([])
+  const dealStart = useRef(null)
+  const hair = characterStyle === 'princess' ? '#30202b' : characterStyle === 'scholar' ? '#3d302a' : '#261e1d'
+  useFrame(({ clock }, delta) => {
+    const time = clock.elapsedTime
+    if (dealing && dealStart.current === null) dealStart.current = time
+    if (!dealing) dealStart.current = null
+    const elapsed = dealStart.current === null ? 0 : time - dealStart.current
+    const lift = dealing && elapsed < 1.1 ? Math.sin(Math.min(elapsed / 1.1, 1) * Math.PI) : 0
+    arms.current.forEach((arm) => {
+      if (arm) arm.rotation.x = MathUtils.damp(arm.rotation.x, -lift * 1.3, 10, delta)
+    })
+    if (head.current) head.current.rotation.y = Math.sin(time * 0.55) * 0.09
+    const blink = Math.max(0.08, Math.min(1, Math.abs(Math.sin(time * 0.65)) * 14))
+    eyes.current.forEach((eye) => { if (eye) eye.scale.y = blink })
+  })
+  return (
+    <group>
+      <mesh position={[0, 0.53, 0]} scale={[1, 1, 0.78]} castShadow>
+        <capsuleGeometry args={[0.3, 0.25, 6, 12]} />
+        <meshStandardMaterial color={color} roughness={0.65} />
+      </mesh>
+      <mesh position={[0, 0.69, 0.24]} rotation={[0, 0, Math.PI / 4]}>
+        <boxGeometry args={[0.22, 0.22, 0.025]} />
+        <meshStandardMaterial color={characterStyle === 'scholar' ? '#ece3c7' : '#d8b775'} roughness={0.55} />
+      </mesh>
+      {characterStyle === 'princess' && (
+        <mesh position={[0, 0.3, 0]} scale={[1, 0.55, 0.8]} castShadow>
+          <sphereGeometry args={[0.38, 16, 10]} /><meshStandardMaterial color={color} roughness={0.65} />
+        </mesh>
+      )}
+      {characterStyle === 'guard' && [-1, 1].map((side) => (
+        <mesh key={side} position={[side * 0.32, 0.72, 0]} scale={[1, 0.55, 0.85]}>
+          <sphereGeometry args={[0.17, 12, 8]} /><meshStandardMaterial color="#b2975c" metalness={0.45} roughness={0.5} />
+        </mesh>
+      ))}
+      {characterStyle === 'scholar' && (
+        <mesh position={[0, 0.49, 0.252]} rotation={[0, 0, -0.5]}>
+          <boxGeometry args={[0.12, 0.6, 0.025]} /><meshStandardMaterial color="#e4d7b4" />
+        </mesh>
+      )}
+      {characterStyle === 'trickster' && (
+        <mesh position={[0, 0.4, 0.24]}>
+          <boxGeometry args={[0.48, 0.07, 0.03]} /><meshStandardMaterial color="#8c653c" />
+        </mesh>
+      )}
+      {[-1, 1].map((side) => (
+        <group key={side}>
+          <group ref={(node) => { arms.current[side === -1 ? 0 : 1] = node }} position={[side * 0.34, 0.75, 0]}>
+            <mesh position={[0, -0.17, 0]} rotation={[0, 0, side * 0.38]} castShadow>
+              <capsuleGeometry args={[0.105, 0.29, 5, 10]} />
+              <meshStandardMaterial color={color} roughness={0.68} />
+            </mesh>
+            <mesh position={[side * 0.08, -0.4, 0.04]} castShadow>
+              <sphereGeometry args={[0.105, 12, 8]} /><meshStandardMaterial color={skinTone} roughness={0.8} />
+            </mesh>
+          </group>
+          <mesh position={[side * 0.16, 0.18, 0.17]} scale={[1, 0.65, 1.4]} castShadow>
+            <sphereGeometry args={[0.17, 12, 8]} /><meshStandardMaterial color={color} roughness={0.7} />
+          </mesh>
+        </group>
+      ))}
+      <group ref={head} position={[0, 1.08, 0]}>
+        <mesh castShadow><sphereGeometry args={[0.29, 20, 16]} /><meshStandardMaterial color={skinTone} roughness={0.7} /></mesh>
+        <mesh position={[0, 0.2, -0.05]} scale={[1.05, 0.53, 1]} castShadow>
+          <sphereGeometry args={[0.29, 16, 12]} /><meshStandardMaterial color={hair} roughness={0.85} />
+        </mesh>
+        {characterStyle === 'princess' && <mesh position={[0, -0.04, -0.17]} scale={[1, 1.3, 0.6]}><sphereGeometry args={[0.29, 16, 12]} /><meshStandardMaterial color={hair} roughness={0.85} /></mesh>}
+        {characterStyle === 'prince' && <mesh position={[0.09, 0.27, 0.04]} rotation={[0, 0, -0.45]} scale={[1, 1.3, 0.8]}><sphereGeometry args={[0.12, 12, 8]} /><meshStandardMaterial color={hair} /></mesh>}
+        {characterStyle === 'trickster' && <mesh position={[-0.13, 0.21, 0.16]} rotation={[0, 0, 0.6]} scale={[1, 1.3, 0.7]}><sphereGeometry args={[0.12, 12, 8]} /><meshStandardMaterial color={hair} /></mesh>}
+        {[-1, 1].map((side, index) => (
+          <group key={side}>
+            <mesh position={[side * 0.29, 0, 0]}><sphereGeometry args={[0.065, 10, 8]} /><meshStandardMaterial color={skinTone} /></mesh>
+            <group ref={(node) => { eyes.current[index] = node }} position={[side * 0.105, 0.025, 0.261]}>
+              <mesh scale={[1, 1, 0.55]}><sphereGeometry args={[0.052, 12, 8]} /><meshStandardMaterial color="#fff9ed" /></mesh>
+              <mesh position={[0, 0, 0.029]}><sphereGeometry args={[0.025, 10, 8]} /><meshBasicMaterial color="#241b18" /></mesh>
+            </group>
+            {characterStyle === 'scholar' && <mesh position={[side * 0.105, 0.025, 0.3]}><torusGeometry args={[0.075, 0.008, 6, 16]} /><meshStandardMaterial color="#d6b77d" metalness={0.5} /></mesh>}
+            <mesh position={[side * 0.105, 0.105, 0.255]} rotation={[0, 0, side * (characterStyle === 'trickster' ? 0.28 : -0.1)]}>
+              <boxGeometry args={[0.11, 0.018, 0.02]} /><meshStandardMaterial color={hair} />
+            </mesh>
+          </group>
+        ))}
+        <mesh position={[0, -0.045, 0.285]}><sphereGeometry args={[0.035, 10, 8]} /><meshStandardMaterial color={skinTone} /></mesh>
+        <mesh position={[0, -0.12, 0.26]} rotation={[0, 0, Math.PI]}><torusGeometry args={[0.065, 0.009, 6, 16, Math.PI]} /><meshStandardMaterial color="#713d32" /></mesh>
+      </group>
+    </group>
   )
 }
 
@@ -233,7 +326,9 @@ function RevealBurst({ color, active }) {
 export default function PlayerTotem({
   position,
   color,
-  height = 1,
+  skinTone,
+  characterStyle,
+  dealing = false,
   role,
   revealed = false,
   elevation = 0,
@@ -243,6 +338,7 @@ export default function PlayerTotem({
   interactive = false,
   onClick,
   onInspect,
+  nameplateRef,
 }) {
   const [retainedRole, setRetainedRole] = useState(() => (revealed ? role : null))
   if (role && revealed && retainedRole !== role) setRetainedRole(role)
@@ -264,7 +360,6 @@ export default function PlayerTotem({
   })
   const outcomeStart = useRef(null)
   const previousOutcomeKey = useRef('')
-  const baseColor = useMemo(() => new Color(color), [color])
   const visible = Boolean(role && revealed)
   const accessoryRole = visible ? role : retainedRole
   const hasCrown = visible && accessoryRole === 'raja'
@@ -348,7 +443,7 @@ export default function PlayerTotem({
           : hasInvestigatorLight ? 17 * accessoryNow : 0
     }
     if (caughtLight.current) caughtLight.current.intensity = isCaught && outcomeAge < 1.8 ? 24 : 0
-  })
+  }, -1)
 
   const interactiveProps = interactive
     ? {
@@ -359,11 +454,11 @@ export default function PlayerTotem({
       onPointerOver: (event) => {
         event.stopPropagation()
         document.body.style.cursor = 'pointer'
-        onInspect?.()
+        onInspect?.(true)
       },
       onPointerOut: () => {
         document.body.style.cursor = ''
-        onInspect?.(null)
+        onInspect?.(false)
       },
     }
     : {}
@@ -375,22 +470,12 @@ export default function PlayerTotem({
         <meshStandardMaterial color={role === 'raja' && visible ? GOLD : '#9a8054'} metalness={0.58} roughness={0.4} />
       </mesh>
       <group ref={body}>
+        <object3D ref={nameplateRef} position={[0, 1.9, 0]} />
       <mesh position={[0, 0.12, 0]} castShadow receiveShadow>
         <cylinderGeometry args={[0.42, 0.5, 0.22, 8]} />
         <meshStandardMaterial color="#c5a36d" roughness={0.75} />
       </mesh>
-        <mesh position={[0, 0.55 * height, 0]} castShadow>
-          <cylinderGeometry args={[0.24, 0.34, 0.72 * height, 7]} />
-          <meshStandardMaterial color={baseColor} roughness={0.5} />
-        </mesh>
-        <mesh position={[0, 1.08 * height, 0]} castShadow>
-          <sphereGeometry args={[0.29, 12, 10]} />
-          <meshStandardMaterial color={baseColor} roughness={0.4} />
-        </mesh>
-        <mesh position={[0, 1.42 * height, 0]} castShadow>
-          <cylinderGeometry args={[0.05, 0.22, 0.3, 5]} />
-          <meshStandardMaterial color="#f0d48d" metalness={0.45} roughness={0.36} />
-        </mesh>
+        <HumanCharacter color={color} skinTone={skinTone} characterStyle={characterStyle} dealing={dealing} />
         {accessoryRole && <RevealBurst color={accessoryColor} active={visible} />}
         {accessoryRole && (
           <group ref={accessory}>

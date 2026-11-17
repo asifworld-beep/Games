@@ -9,7 +9,11 @@ function safePlayerIdentity(player, id) {
   const color = typeof player?.color === 'string' && /^#[\da-f]{6}$/i.test(player.color)
     ? player.color
     : '#e8b85b'
-  return { id, name: name || 'Player', color, human: true }
+  const characterStyle = ['prince', 'princess', 'scholar', 'guard', 'trickster'].includes(player?.characterStyle)
+    ? player.characterStyle : 'prince'
+  const skinTone = typeof player?.skinTone === 'string' && /^#[\da-f]{6}$/i.test(player.skinTone)
+    ? player.skinTone : '#bd805e'
+  return { id, name: name || 'Player', color, characterStyle, skinTone, human: true }
 }
 
 export class MultiplayerManager {

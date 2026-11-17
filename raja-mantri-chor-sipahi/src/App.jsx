@@ -7,9 +7,10 @@ import {
   RotateCcw,
   Settings,
   Sparkles,
-  UsersRound,
+  Trophy,
   Volume2,
   VolumeX,
+  X,
 } from 'lucide-react'
 import {
   chooseBotGuess,
@@ -27,6 +28,7 @@ import {
 import { THEMES } from './config/themes.js'
 import LobbyPanel from './components/LobbyPanel.jsx'
 import PlayerSeat from './components/PlayerSeat.jsx'
+import { AvatarMark } from './components/RoleIcon.jsx'
 import ChatDrawer from './components/ChatDrawer.jsx'
 import { createChatId, createChatRecord } from './chat/chatUtils.js'
 import { getChatCopy } from './i18n/chatTranslations.js'
@@ -34,14 +36,14 @@ import { getDirection, translate, translateRole } from './i18n/translations.js'
 import { MultiplayerManager } from './network/multiplayerManager.js'
 import { useGameStore } from './store/useGameStore.js'
 import { SoundEngine } from './soundEngine.js'
-import { speakChant, stopChantVoice } from './chantVoiceEngine.js'
+import { CHANTS, RANI_CALLS, prepareSpeechVoices, speakPhase, speakRoleLine, stopChantVoice } from './chantVoiceEngine.js'
+import { createRoundSequence } from './roundSequence.js'
 import { useShallow } from 'zustand/react/shallow'
 import './App.css'
 
 const CourtyardScene = lazy(() => import('./CourtyardScene.jsx'))
 const SettingsModal = lazy(() => import('./components/SettingsModal.jsx'))
 const HowToPlay = lazy(() => import('./components/HowToPlay.jsx'))
-const EMOTES = ['😅', '🧐', '👑', 'Main Chor Nahi Hoon!']
 const SCRIPT_FONTS = {
   hi: 'Noto Sans Devanagari',
   bho: 'Noto Sans Devanagari',
@@ -103,30 +105,23 @@ function chooseBotReply(bots, roleById, phase, language) {
   return { responder, response, delay: 1200 + Math.floor(Math.random() * 1301) }
 }
 
-function PlayerRow({ player, rank, role, canGuess, onGuess, guessedPlayerId, phase, direction }) {
-  const t = (key) => translate(direction, key)
+function PlayerRow({ player, rank, role, hiddenRole, language }) {
+  const t = (key) => translate(language, key)
   return (
-    <div className={`player-row${canGuess ? ' can-guess' : ''}${guessedPlayerId === player.id ? ' was-guessed' : ''}`}>
-      <span className="rank-number">{rank}</span>
-      <span className="row-avatar" style={{ '--seat-color': player.color }}>{player.initials}</span>
+    <div className="leaderboard-row">
+      <span className="leaderboard-rank">#{rank}</span>
+      <span className="row-avatar" style={{ '--seat-color': player.color }}><AvatarMark player={player} role={role} hiddenRole={hiddenRole} /></span>
       <span className="row-details">
         <b>{player.name}</b>
         <small>{role?.name ?? t(player.human ? 'playerLabel' : 'guestLabel')}</small>
       </span>
-      {phase === 'result' ? (
-        <span className="player-points">{player.score.toLocaleString()} <small>{t('pts')}</small></span>
-      ) : canGuess ? (
-        <button className="guess-button" type="button" onClick={() => onGuess(player.id)} aria-label={`${t('guess')} ${player.name}`}>
-          {t('pick')} <ArrowUpRight size={12} />
-        </button>
-      ) : (
-        <span className="player-points">{player.score ? player.score.toLocaleString() : '—'}</span>
-      )}
+      <span className="leaderboard-points"><small>{t('roundPoints')}</small><b>+{(player.roundPoints ?? 0).toLocaleString()}</b></span>
+      <span className="leaderboard-points total"><small>{t('totalScore')}</small><b>{player.score.toLocaleString()}</b></span>
     </div>
   )
 }
 
-function ActionMessage({ game, currentPlayerId, onStart, onReveal, onGuess, onNext, onRestart, localPrivacy, peekReady }) {
+function ActionMessage({ game, currentPlayerId, onStart, onReveal, onSelect, onGuess, onNext, onRestart, onShowLeaderboard, localPrivacy }) {
   const t = (key) => translate(game.language, key)
   const ministerId = game.roles?.[ROLE.MANTRI]
   const kingId = game.roles?.[ROLE.RAJA]
@@ -144,6 +139,14 @@ function ActionMessage({ game, currentPlayerId, onStart, onReveal, onGuess, onNe
   const accusation = accusedPlayer?.id === currentPlayerId
     ? t('accusedYou')
     : `${accusedPlayer?.name} ${t('wasAccused')}`
+  const scoreRows = game.phase === 'result' && (
+    <div className="round-scores" aria-label="Round scores">
+      {game.players.map((player) => <span key={player.id}>{player.name}: +{player.roundPoints ?? 0}</span>)}
+    </div>
+  )
+  const roundScores = game.chatOpen && scoreRows
+    ? <details className="compact-round-scores"><summary>{t('roundPoints')} {t('pointsLabel')}</summary>{scoreRows}</details>
+    : scoreRows
 
   if (game.phase === 'lobby') {
     return (
@@ -163,6 +166,10 @@ function ActionMessage({ game, currentPlayerId, onStart, onReveal, onGuess, onNe
     )
   }
 
+  if (game.phase === 'shuffle') {
+    return <div className="action-card"><h3>{t('preparing')}</h3></div>
+  }
+
   if (game.phase === 'private-peek') {
     if (privatePlayerId !== currentPlayerId) {
       return (
@@ -177,9 +184,10 @@ function ActionMessage({ game, currentPlayerId, onStart, onReveal, onGuess, onNe
     return (
       <div className="action-card">
         <p className="eyebrow">{t('privateChit')}</p>
-        <h3>{localPrivacy ? t('privateChitReady') : `${t('yourRole')} ${translateRole(game.language, privateRole)}`}</h3>
+        <h3>{localPrivacy || !game.privatePeekOpen ? t('privateChitReady') : `${t('yourRole')} ${translateRole(game.language, privateRole)}`}</h3>
         <p>{localPrivacy ? t('hideAndPassHelp') : t('keepRoleSecret')}</p>
-        {!localPrivacy && <button className="primary-button" type="button" disabled={!peekReady} onClick={onReveal}>{t('hideAndPass')} <ArrowUpRight size={15} /></button>}
+        {!localPrivacy && !game.privatePeekOpen && <button className="primary-button" type="button" onClick={onReveal}>{t('reveal')} <ArrowUpRight size={15} /></button>}
+        {!localPrivacy && game.privatePeekOpen && <><small className="peek-caption">{t('memorizing')}</small><div className="peek-progress" role="progressbar" aria-label={t('memorizing')}><span /></div></>}
       </div>
     )
   }
@@ -191,7 +199,7 @@ function ActionMessage({ game, currentPlayerId, onStart, onReveal, onGuess, onNe
         <h3>{isHumanKing ? (localPrivacy ? t('privateChitReady') : `${t('youAre')} ${translateRole(game.language, ROLE.RAJA)}.`) : t('kingLifting')}</h3>
         <p>{isHumanKing ? t('revealToCall') : t('courtWaitsKing')}</p>
         {isHumanKing && <button className="primary-button" type="button" onClick={onReveal}>{localPrivacy ? t('hideAndPass') : t('reveal')} <Crown size={15} /></button>}
-        {kingId && <div className="royal-callout">{t('kingCallout')}</div>}
+        {kingId && <div className="royal-callout">{game.playerCount === 5 ? '“Meri Rani Kaun?”' : t('kingCallout')}</div>}
       </div>
     )
   }
@@ -224,14 +232,14 @@ function ActionMessage({ game, currentPlayerId, onStart, onReveal, onGuess, onNe
     return (
       <div className="action-card chant-card">
         <p className="eyebrow">{t('royalCall')}</p>
-        <h3>{t('chant')}</h3>
+        <h3>{(CHANTS[game.language] ?? CHANTS.en)[1]}</h3>
         <p>{t('chantPrompt')}</p>
       </div>
     )
   }
 
   if (['king-revealed', 'rani-revealed', 'sipahi-revealed', 'reveal-accused', 'reveal-remaining'].includes(game.phase)) {
-    const text = game.phase === 'king-revealed' ? t('kingCallout')
+    const text = game.phase === 'king-revealed' ? (game.playerCount === 5 ? '“Meri Rani Kaun?”' : t('kingCallout'))
       : game.phase === 'rani-revealed' ? t('raniCallout')
         : game.phase === 'sipahi-revealed' ? t(game.playerCount === 5 ? 'sipahiCallout5' : 'sipahiCallout4')
           : accusation
@@ -247,13 +255,14 @@ function ActionMessage({ game, currentPlayerId, onStart, onReveal, onGuess, onNe
           <p>{t('guessPrompt')}</p>
           <div className="guess-options">
             {candidates.map((player) => (
-              <button type="button" className="guess-option" key={player.id} onClick={() => onGuess(player.id)}>
+              <button type="button" className={`guess-option${game.targetedPlayerId === player.id ? ' selected' : ''}`} key={player.id} aria-pressed={game.targetedPlayerId === player.id} onClick={() => onSelect(player.id)}>
                 <span className="row-avatar" style={{ '--seat-color': player.color }}>{player.initials}</span>
                 <span>{player.name}</span>
                 <ArrowUpRight size={14} />
               </button>
             ))}
           </div>
+          <button type="button" className="primary-button" disabled={!game.targetedPlayerId} onClick={() => onGuess(game.targetedPlayerId)}>{t('arrestSuspect')}</button>
         </div>
       )
     }
@@ -274,6 +283,8 @@ function ActionMessage({ game, currentPlayerId, onStart, onReveal, onGuess, onNe
         <p className="eyebrow">{t('finalStandings')}</p>
         <h3>{winner?.name} {game.language === 'en' && winner?.id === currentPlayerId && winner?.name?.toLowerCase() === 'you' ? 'win!' : t('wins')}</h3>
         <p>{winner?.score.toLocaleString()} {t('pointsLabel')} · {t('roundsComplete')}</p>
+        {roundScores}
+        <button className="secondary-button final-leaderboard" type="button" onClick={onShowLeaderboard}><Trophy size={15} /> {t('leaderboard')}</button>
         <button className="primary-button" type="button" onClick={onRestart}>{t('freshGame')} <RotateCcw size={15} /></button>
       </div>
     )
@@ -284,12 +295,14 @@ function ActionMessage({ game, currentPlayerId, onStart, onReveal, onGuess, onNe
       <p className="eyebrow">{game.guessWasCorrect ? t('correct') : t('wrong')}</p>
       <h3>{game.guessWasCorrect ? t('correct') : t('wrongTitle')}</h3>
       <p>{accusation} {t('rolesRevealed')}</p>
+      {roundScores}
       <button className="primary-button" type="button" onClick={onNext}>{t('next')} · {String(game.roundNumber + 1).padStart(2, '0')} <ArrowUpRight size={16} /></button>
     </div>
   )
 }
 
 function App() {
+  useEffect(() => { prepareSpeechVoices() }, [])
   const settings = useGameStore(useShallow((state) => ({
     nickname: state.nickname,
     avatarColor: state.avatarColor,
@@ -297,14 +310,19 @@ function App() {
     difficulty: state.difficulty,
     language: state.language,
     theme: state.theme,
+    tableStyle: state.tableStyle,
     fontScale: state.fontScale,
     fontStyle: state.fontStyle,
     volume: state.volume,
     ambientMusic: state.ambientMusic,
+    musicVolume: state.musicVolume,
+    musicTrack: state.musicTrack,
     haptics: state.haptics,
     graphics: state.graphics,
     rounds: state.rounds,
     timer: state.timer,
+    characterStyle: state.characterStyle,
+    skinTone: state.skinTone,
     mode: state.mode,
     playerCount: state.playerCount ?? 4,
     localNames: state.localNames,
@@ -315,11 +333,11 @@ function App() {
   const [remoteGame, setRemoteGame] = useState(null)
   const [muted, setMuted] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [cameraResetKey, setCameraResetKey] = useState(0)
   const [guideOpen, setGuideOpen] = useState(false)
   const [scoreboardOpen, setScoreboardOpen] = useState(false)
   const [readyFontKey, setReadyFontKey] = useState(null)
   const [audioUnavailable, setAudioUnavailable] = useState(false)
-  const [shuffleActive, setShuffleActive] = useState(false)
   const [roomInfo, setRoomInfo] = useState(null)
   const [localPeerId, setLocalPeerId] = useState(null)
   const [roomStatus, setRoomStatus] = useState('idle')
@@ -327,15 +345,19 @@ function App() {
   const [emotes, setEmotes] = useState({})
   const [chatMessages, setChatMessages] = useState([])
   const [speechBubbles, setSpeechBubbles] = useState([])
-  const [chatMuted, setChatMuted] = useState(false)
+  const [chatOpen, setChatOpen] = useState(false)
   const [botTyping, setBotTyping] = useState(false)
-  const [emoteOpen, setEmoteOpen] = useState(false)
-  const [peekedPlayerId, setPeekedPlayerId] = useState(null)
-  const [peekReady, setPeekReady] = useState(false)
-  const [passedPlayerId, setPassedPlayerId] = useState(null)
   const [nervousPlayerIds, setNervousPlayerIds] = useState([])
-  const [clockTick, setClockTick] = useState(0)
-  const [timerStartedAt, setTimerStartedAt] = useState(0)
+  const [clockTick, setClockTick] = useState(() => Date.now())
+
+  useEffect(() => {
+    if (!scoreboardOpen) return undefined
+    const onKeyDown = (event) => {
+      if (event.key === 'Escape') setScoreboardOpen(false)
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [scoreboardOpen])
   const audioEngine = useRef(null)
   const seatAnchorRefs = useRef(new Map())
   const managerRef = useRef(null)
@@ -343,16 +365,17 @@ function App() {
   const dispatchRef = useRef(dispatch)
   const settingsRef = useRef(settings)
   const roomInfoRef = useRef(roomInfo)
-  const shuffleTimer = useRef(null)
-  const automationTimer = useRef(null)
+  const sequence = useRef(createRoundSequence())
+  const voiceGate = useRef(null)
+  const voiceAcks = useRef(new Map())
+  const mutedRef = useRef(muted)
   const emoteTimers = useRef({})
   const chatBubbleTimers = useRef({})
   const seenChatIds = useRef(new Set())
-  const chatMutedRef = useRef(chatMuted)
+  const chatOpenRef = useRef(false)
   const botReplyTimer = useRef(null)
   const lastBanterKey = useRef('')
   const autoJoinAttempted = useRef(false)
-  const submitActionRef = useRef(() => {})
   const startRoundRef = useRef(() => {})
 
   useEffect(() => {
@@ -360,7 +383,8 @@ function App() {
     dispatchRef.current = dispatch
     settingsRef.current = settings
     roomInfoRef.current = roomInfo
-  }, [game, settings, roomInfo])
+    mutedRef.current = muted
+  }, [game, settings, roomInfo, muted])
 
   const t = (key) => translate(settings.language, key)
   const direction = getDirection(settings.language)
@@ -397,7 +421,7 @@ function App() {
   const displayPlayerCount = displayGame.phase === 'lobby' ? settings.playerCount : displayGame.players.length
   const selectedFont = FONT_PRESETS[settings.fontStyle] ?? FONT_PRESETS.royal
   const chitFontFamily = `${selectedFont.body}, "${SCRIPT_FONTS[settings.language] ?? 'Noto Sans'}", sans-serif`
-  const isRemoteClient = Boolean(remoteGame) && settings.mode === 'online' && !roomInfo?.isHost
+  const isRemoteClient = settings.mode === 'online' && Boolean(roomInfo) && !roomInfo.isHost
   const ministerId = displayGame.roles?.[ROLE.MANTRI]
   const kingId = displayGame.roles?.[ROLE.RAJA]
   const queenId = displayGame.roles?.[ROLE.RANI]
@@ -412,14 +436,15 @@ function App() {
   const rolesByPlayer = displayGame.roles
     ? Object.fromEntries(Object.entries(displayGame.roles).map(([role, playerId]) => [playerId, role]))
     : {}
-  const focusPlayerId = ['reveal-king', 'king-revealed'].includes(displayGame.phase)
+  const focusPlayerId = displayGame.phase === 'reveal-accused' ? displayGame.guessedPlayerId
+    : displayGame.phase === 'reveal-remaining' ? displayGame.suspectPlayerIds.find((id) => id !== displayGame.guessedPlayerId)
+      : ['reveal-king', 'king-revealed'].includes(displayGame.phase)
     ? kingId
     : ['reveal-rani', 'rani-revealed'].includes(displayGame.phase) ? queenId
       : ['reveal-sipahi', 'sipahi-revealed', 'chant', 'guess'].includes(displayGame.phase) ? sipahiId : null
-  const revealPlayerId = displayGame.phase === 'reveal-king' && kingId === currentPlayerId
-    ? kingId
-    : displayGame.phase === 'reveal-rani' && queenId === currentPlayerId ? queenId
-      : displayGame.phase === 'reveal-sipahi' && sipahiId === currentPlayerId ? sipahiId : null
+  const revealPlayerId = displayGame.phase === 'private-peek' && !displayGame.privatePeekOpen
+    && settings.mode !== 'local' && displayGame.privatePeekQueue?.[0] === currentPlayerId
+    ? currentPlayerId : null
   const revealActionType = ({
     'reveal-king': 'REVEAL_KING',
     'reveal-rani': 'REVEAL_RANI',
@@ -428,42 +453,38 @@ function App() {
   const guessablePlayerIds = displayGame.phase === 'guess' && sipahiId === currentPlayerId
     ? displayGame.suspectPlayerIds ?? [ministerId, displayGame.roles?.[ROLE.CHOR]]
     : []
-  const activeRevealPlayer = displayGame.phase === 'reveal-king'
-    ? kingId
-      : displayGame.phase === 'reveal-rani' ? queenId
-        : displayGame.phase === 'reveal-sipahi' ? sipahiId
-      : displayGame.phase === 'private-peek' ? displayGame.privatePeekQueue?.[0] : null
+  const activeRevealPlayer = displayGame.phase === 'private-peek' ? displayGame.privatePeekQueue?.[0] : null
+  const sipahiIsHuman = displayGame.players.find(({ id }) => id === sipahiId)?.human
   const privacyCurtainNeeded = settings.mode === 'local'
-    && ['private-peek', 'reveal-king', 'reveal-rani', 'reveal-sipahi'].includes(displayGame.phase)
+    && displayGame.phase === 'private-peek'
     && displayGame.players.find(({ id }) => id === activeRevealPlayer)?.human
-    && passedPlayerId !== activeRevealPlayer
-
-  useEffect(() => {
-    if (displayGame.phase !== 'private-peek' || (settings.mode === 'local' && peekedPlayerId !== displayGame.privatePeekQueue?.[0])) {
-      return undefined
-    }
-    const timer = window.setTimeout(() => setPeekReady(true), 1500)
-    return () => window.clearTimeout(timer)
-  }, [displayGame.phase, displayGame.privatePeekQueue, peekedPlayerId, settings.mode])
   const displayPlayers = displayGame.players.map((player, index) => {
-    const profilePlayer = settings.mode === 'local' ? player.id === 'local-0' : player.id === currentPlayerId
-    const localName = settings.mode === 'local' ? settings.localNames[index] : settings.nickname
-    return profilePlayer
-      ? {
-        ...player,
-        name: localName?.trim() || player.name,
-        initials: (localName?.trim() || player.name).slice(0, 1).toUpperCase(),
+    const localLobby = settings.mode === 'local' && displayGame.phase === 'lobby'
+    const profilePlayer = settings.mode === 'local' ? (localLobby ? index === 0 : player.id === 'local-0') : player.id === currentPlayerId
+    const name = localLobby ? settings.localNames[index]?.trim() || `Player ${index + 1}`
+      : profilePlayer && settings.mode !== 'local' ? settings.nickname?.trim() || player.name : player.name
+    return {
+      ...player,
+      name,
+      initials: name.slice(0, 1).toUpperCase(),
+      ...(profilePlayer ? {
         color: settings.avatarColor,
         crest: settings.crest,
-      }
-      : player
+        characterStyle: settings.characterStyle,
+        skinTone: settings.skinTone,
+      } : {}),
+    }
   })
   const displayLeaderboard = getLeaderboard(displayPlayers)
   const rankByPlayer = Object.fromEntries(displayLeaderboard.map(({ id, rank }) => [id, rank]))
+  const roundTimeLeft = displayGame.investigationStartedAt
+    ? Math.min(displayGame.investigationSeconds, Math.max(0, displayGame.investigationSeconds - Math.floor((clockTick - displayGame.investigationStartedAt) / 1000)))
+    : displayGame.investigationSeconds
   const seatInfoByPlayerId = Object.fromEntries(displayPlayers.map((player) => {
     const role = getRoleForPlayer(displayGame, player.id)
     return [player.id, {
-      role: role ? { ...role, name: translateRole(settings.language, rolesByPlayer[player.id]) } : null,
+      role: role ? { ...role, id: rolesByPlayer[player.id], name: translateRole(settings.language, rolesByPlayer[player.id]) } : null,
+      hiddenRole: displayGame.phase !== 'lobby' && !role,
       active: player.id === kingId && displayGame.phase === 'reveal-king'
         || player.id === queenId && displayGame.phase === 'reveal-rani'
         || player.id === sipahiId && ['reveal-sipahi', 'chant', 'guess'].includes(displayGame.phase),
@@ -477,23 +498,26 @@ function App() {
     }]
   }))
 
-  const roundTimeLeft = settings.timer > 0 && timerStartedAt
-    ? Math.max(0, settings.timer - Math.floor((clockTick - timerStartedAt) / 1000))
-    : settings.timer
+  const reportAudioError = useCallback((message, error) => {
+    console.error(message, error)
+    setAudioUnavailable(true)
+  }, [])
 
   const activateAudio = useCallback(async () => {
     try {
       if (!audioEngine.current) audioEngine.current = new SoundEngine()
       const active = await audioEngine.current.activate()
       if (!active) setAudioUnavailable(true)
-      else if (settingsRef.current.ambientMusic && !muted) audioEngine.current.startAmbient(settingsRef.current.volume)
+      else if (settingsRef.current.ambientMusic && !muted) {
+        const current = settingsRef.current
+        audioEngine.current.startAmbient(current.musicTrack, current.musicVolume, THEMES[current.theme]?.isNight ?? false)
+      }
       return active
     } catch (error) {
-      console.error('Unable to activate procedural audio.', error)
-      setAudioUnavailable(true)
+      reportAudioError('Unable to activate procedural audio.', error)
       return false
     }
-  }, [muted])
+  }, [muted, reportAudioError])
 
   const vibrate = useCallback(() => {
     if (settingsRef.current.haptics && 'vibrate' in navigator) navigator.vibrate(18)
@@ -505,10 +529,9 @@ function App() {
       const active = await audioEngine.current.activate()
       if (active) audioEngine.current.play(name, settingsRef.current.volume)
     } catch (error) {
-      console.error('Unable to play the procedural game sound.', error)
-      setAudioUnavailable(true)
+      reportAudioError('Unable to play the procedural game sound.', error)
     }
-  }, [muted])
+  }, [muted, reportAudioError])
 
   const addChatMessage = useCallback((value) => {
     const message = createChatRecord(value)
@@ -518,13 +541,13 @@ function App() {
       seenChatIds.current.delete(seenChatIds.current.values().next().value)
     }
     setChatMessages((current) => [...current.slice(-99), message])
-    if (chatMutedRef.current) return
+    if (chatOpenRef.current) return
     setSpeechBubbles((current) => [...current.filter(({ playerId }) => playerId !== message.playerId).slice(-3), message])
     window.clearTimeout(chatBubbleTimers.current[message.id])
     chatBubbleTimers.current[message.id] = window.setTimeout(() => {
       setSpeechBubbles((current) => current.filter(({ id }) => id !== message.id))
       delete chatBubbleTimers.current[message.id]
-    }, 3500)
+    }, 2500)
   }, [])
 
   const scheduleBotMessage = useCallback((player, text, delay) => {
@@ -554,6 +577,20 @@ function App() {
   }, [])
 
   const handleNetworkMessage = useCallback((data, senderId) => {
+    if (data.type === 'voice-complete' && senderId && roomInfoRef.current?.isHost) {
+      const state = currentGameRef.current
+      const key = `${state.sequenceId}:${state.phase}`
+      if (data.key !== key || !state.players.some((player) => player.human && player.id === senderId)) return
+      const received = voiceAcks.current.get(key) ?? new Set()
+      received.add(senderId)
+      voiceAcks.current.set(key, received)
+      const gate = voiceGate.current
+      if (gate?.key === key) {
+        gate.pending.delete(senderId)
+        if (!gate.pending.size) gate.resolve()
+      }
+      return
+    }
     if (data.type === 'chat' && data.message) {
       addChatMessage(data.message)
       return
@@ -578,15 +615,11 @@ function App() {
     }
     if (data.type === 'action' && senderId) {
       const state = currentGameRef.current
-      if (data.action?.type === 'PEEK_PRIVATE' && state.phase === 'private-peek' && state.privatePeekQueue[0] === senderId) {
-        dispatchRef.current(data.action)
-      } else if (data.action?.type === 'REVEAL_KING' && state.phase === 'reveal-king' && state.roles?.[ROLE.RAJA] === senderId) {
-        dispatchRef.current(data.action)
-      } else if (data.action?.type === 'REVEAL_RANI' && state.phase === 'reveal-rani' && state.roles?.[ROLE.RANI] === senderId) {
-        dispatchRef.current(data.action)
-      } else if (data.action?.type === 'REVEAL_SIPAHI' && state.phase === 'reveal-sipahi' && state.roles?.[ROLE.SIPAHI] === senderId) {
-        dispatchRef.current(data.action)
+      if (data.action?.type === 'OPEN_PRIVATE' && state.phase === 'private-peek' && state.privatePeekQueue[0] === senderId) {
+        dispatchRef.current({ type: 'OPEN_PRIVATE', playerId: senderId })
       } else if (data.action?.type === 'GUESS' && state.phase === 'guess' && state.roles?.[ROLE.SIPAHI] === senderId) {
+        dispatchRef.current(data.action)
+      } else if (data.action?.type === 'SELECT_SUSPECT' && state.phase === 'guess' && state.roles?.[ROLE.SIPAHI] === senderId) {
         dispatchRef.current(data.action)
       } else if (data.action?.type === 'NEXT_ROUND' && state.phase === 'result' && !state.isComplete) {
         startRoundRef.current()
@@ -605,6 +638,11 @@ function App() {
         const previous = roomInfoRef.current
         if (info.isHost && previous && currentGameRef.current.phase !== 'lobby') {
           const stillConnected = new Set(info.players.map(({ id }) => id))
+          const gate = voiceGate.current
+          if (gate) {
+            for (const id of gate.pending) if (!stillConnected.has(id)) gate.pending.delete(id)
+            if (!gate.pending.size) gate.resolve()
+          }
           currentGameRef.current.players.forEach((player) => {
             if (player.human && player.id !== manager.localPlayer?.id && !stillConnected.has(player.id)) {
               dispatchRef.current({ type: 'REPLACE_DISCONNECTED_PLAYER', playerId: player.id })
@@ -620,7 +658,9 @@ function App() {
     return () => {
       manager.close()
       managerRef.current = null
-      if (audioEngine.current) audioEngine.current.close()
+      const engine = audioEngine.current
+      audioEngine.current = null
+      if (engine) engine.close()
     }
   }, [handleNetworkMessage, updateSetting])
 
@@ -637,49 +677,99 @@ function App() {
   }, [game, roomInfo, settings.language])
 
   useEffect(() => {
+    const phase = displayGame.phase
     const hostMayAutomate = settings.mode !== 'online' || roomInfo?.isHost
-    const rajaId = game.roles?.[ROLE.RAJA]
-    const raniId = game.roles?.[ROLE.RANI]
-    const sipahiId = game.roles?.[ROLE.SIPAHI]
-    const botDelay = () => 1800 + Math.floor(Math.random() * 1201)
-    if (hostMayAutomate && game.phase === 'reveal-king' && !game.players.find(({ id }) => id === rajaId)?.human) {
-      automationTimer.current = window.setTimeout(() => dispatch({ type: 'REVEAL_KING' }), botDelay())
-    } else if (hostMayAutomate && game.phase === 'reveal-rani' && !game.players.find(({ id }) => id === raniId)?.human) {
-      automationTimer.current = window.setTimeout(() => dispatch({ type: 'REVEAL_RANI' }), botDelay())
-    } else if (hostMayAutomate && game.phase === 'reveal-sipahi' && !game.players.find(({ id }) => id === sipahiId)?.human) {
-      automationTimer.current = window.setTimeout(() => dispatch({ type: 'REVEAL_SIPAHI' }), botDelay())
-    } else if (hostMayAutomate && ['king-revealed', 'rani-revealed', 'sipahi-revealed', 'reveal-accused', 'reveal-remaining'].includes(game.phase)) {
-      automationTimer.current = window.setTimeout(() => dispatch({ type: 'ADVANCE_REVEAL' }), 1500)
-    } else if (hostMayAutomate && game.phase === 'chant') {
-      automationTimer.current = window.setTimeout(() => dispatch({ type: 'BEGIN_INVESTIGATION' }), 2000)
-    } else if (hostMayAutomate && game.phase === 'guess' && !game.players.find(({ id }) => id === sipahiId)?.human) {
-      automationTimer.current = window.setTimeout(() => {
-        const guess = chooseBotGuess(game)
-        if (guess) dispatch({ type: 'GUESS', playerId: guess })
-      }, botDelay())
+    const phaseSequence = sequence.current
+    const acknowledgements = voiceAcks.current
+    const currentSettings = settingsRef.current
+    const calls = {
+      'king-revealed': displayPlayerCount === 5 ? 'Meri Rani Kaun?' : 'Mera Sipahi Kaun?',
+      'rani-revealed': RANI_CALLS[currentSettings.language] ?? RANI_CALLS.en,
+      'sipahi-revealed': displayPlayerCount === 5 ? 'Ji Maharani!' : 'Ji Maharaj!',
+      chant: (CHANTS[currentSettings.language] ?? CHANTS.en)[1],
     }
-    return () => window.clearTimeout(automationTimer.current)
-  }, [game, roomInfo?.isHost, settings.mode])
-
-  useEffect(() => {
-    if (displayGame.phase !== 'chant' || muted || !settings.volume) return undefined
-    const engine = audioEngine.current
-    const fallback = () => engine?.playChant(settings.volume, true)
-    try {
-      const speaking = speakChant(settings.language, settings.volume, (error) => {
-        console.error('Unable to speak the chant:', error)
-        fallback()
-      })
-      engine?.playChant(settings.volume, !speaking)
-    } catch (error) {
-      console.error('Unable to start the spoken chant.', error)
-      fallback()
+    let active = true
+    let speech = null
+    if (calls[phase] && !mutedRef.current && currentSettings.volume > 0) {
+      try {
+        if (phase === 'chant') audioEngine.current?.music?.duck()
+        const onVoiceError = (error) => {
+          console.error('Unable to speak the royal call:', error)
+          if (active && phase === 'chant') audioEngine.current?.playChant(currentSettings.volume, true)
+        }
+        if (phase === 'rani-revealed') {
+          audioEngine.current?.playRaniVoiceChime(currentSettings.volume)
+          speech = speakRoleLine({ role: 'RANI', text: calls[phase], lang: currentSettings.language, volume: currentSettings.volume, onError: onVoiceError })
+        } else {
+          speech = speakPhase(calls[phase], phase === 'chant' ? currentSettings.language : 'en', currentSettings.volume, onVoiceError, ({ 'king-revealed': 'raja', 'sipahi-revealed': 'sipahi' })[phase])
+        }
+        if (phase === 'rani-revealed' && !speech) {
+          console.warn('No matching female voice is available for the Rani.')
+          // Surface the browser's missing speech capability.
+          // oxlint-disable-next-line react/set-state-in-effect
+          setAudioUnavailable(true)
+        }
+        if (phase === 'chant') audioEngine.current?.playChant(currentSettings.volume, !speech)
+      } catch (error) {
+        console.error('Unable to start the royal call.', error)
+        if (phase === 'chant') audioEngine.current?.playChant(currentSettings.volume, true)
+      }
+    }
+    const key = `${displayGame.sequenceId}:${phase}`
+    let remoteSpeech = Promise.resolve()
+    if (calls[phase] && settings.mode === 'online') {
+      if (roomInfo?.isHost) {
+        const received = acknowledgements.get(key) ?? new Set()
+        const pending = new Set(currentGameRef.current.players
+          .filter((player) => player.human && player.id !== managerRef.current?.localPlayer?.id && !received.has(player.id))
+          .map(({ id }) => id))
+        if (pending.size) {
+          remoteSpeech = new Promise((resolve) => { voiceGate.current = { key, pending, resolve } })
+        }
+      } else {
+        phaseSequence.advancePhaseAfterDelay(0, () => managerRef.current?.send({ type: 'voice-complete', key }), speech ?? Promise.resolve())
+      }
+    }
+    if (hostMayAutomate) {
+      const advance = (delay, action, tail = 0) => {
+        phaseSequence.advancePhaseAfterDelay(delay, action, Promise.all([speech ?? Promise.resolve(), remoteSpeech]), tail)
+      }
+      if (phase === 'shuffle') advance(3500, () => dispatch({ type: 'FINISH_SHUFFLE' }))
+      else if (phase === 'private-peek' && displayGame.privatePeekOpen) {
+        const playerId = activeRevealPlayer
+        advance(4000, () => dispatch({ type: 'PEEK_PRIVATE', playerId }))
+      } else if (phase === 'reveal-king') advance(0, () => dispatch({ type: 'REVEAL_KING' }))
+      else if (phase === 'reveal-rani') advance(0, () => dispatch({ type: 'REVEAL_RANI' }))
+      else if (phase === 'reveal-sipahi') advance(0, () => dispatch({ type: 'REVEAL_SIPAHI' }))
+      else if (['king-revealed', 'rani-revealed', 'sipahi-revealed', 'reveal-accused'].includes(phase)) {
+        advance(4500, () => dispatch({ type: 'ADVANCE_REVEAL' }))
+      } else if (phase === 'reveal-remaining') advance(4000, () => dispatch({ type: 'ADVANCE_REVEAL' }))
+      else if (phase === 'chant') advance(6000, () => dispatch({ type: 'BEGIN_INVESTIGATION', startedAt: Date.now() }), 1200)
+      else if (phase === 'guess') {
+        const state = currentGameRef.current
+        const sipahi = state.players.find(({ id }) => id === state.roles?.[ROLE.SIPAHI])
+        const delay = sipahi?.human ? state.investigationSeconds * 1000 : 10000 + Math.floor(Math.random() * 4001)
+        advance(delay, () => {
+          const current = currentGameRef.current
+          const playerId = sipahi?.human
+            ? current.targetedPlayerId ?? current.suspectPlayerIds[Math.floor(Math.random() * current.suspectPlayerIds.length)]
+            : chooseBotGuess(current)
+          if (playerId) dispatch({ type: 'GUESS', playerId })
+        })
+      }
     }
     return () => {
+      active = false
+      phaseSequence.cancelRoundSequence()
+      if (voiceGate.current?.key === key) {
+        voiceGate.current.resolve()
+        voiceGate.current = null
+      }
+      acknowledgements.delete(key)
       stopChantVoice()
-      engine?.stopChant()
+      audioEngine.current?.stopChant()
     }
-  }, [displayGame.phase, displayGame.roundNumber, muted, settings.language, settings.volume])
+  }, [displayGame.phase, displayGame.roundNumber, displayGame.sequenceId, displayGame.privatePeekOpen, activeRevealPlayer, displayPlayerCount, sipahiIsHuman, settings.mode, roomInfo?.isHost])
 
   useEffect(() => {
     const chorId = game.roles?.[ROLE.CHOR]
@@ -738,43 +828,39 @@ function App() {
   ])
 
   useEffect(() => {
-    if (settings.ambientMusic && audioEngine.current && !muted) {
-      audioEngine.current.startAmbient(settings.volume)
-    } else {
-      audioEngine.current?.stopAmbient()
+    try {
+      if (settings.ambientMusic && audioEngine.current && !muted) {
+        audioEngine.current.startAmbient(settings.musicTrack, settings.musicVolume, THEMES[settings.theme]?.isNight ?? false)
+      } else {
+        audioEngine.current?.stopAmbient()
+      }
+    } catch (error) {
+      // Audio graph failures must be surfaced to the player.
+      // oxlint-disable-next-line react/set-state-in-effect
+      reportAudioError('Unable to update procedural music.', error)
     }
-  }, [settings.ambientMusic, settings.volume, muted])
+  }, [settings.ambientMusic, settings.musicTrack, settings.musicVolume, settings.theme, muted, reportAudioError])
 
   useEffect(() => {
-    const mayHandleTimer = settings.mode !== 'online' || roomInfo?.isHost || sipahiId === currentPlayerId
-    if (displayGame.phase !== 'guess' || !settings.timer || !mayHandleTimer) return undefined
-    const startTimer = window.setTimeout(() => setTimerStartedAt(Date.now()), 0)
+    if (displayGame.phase !== 'guess') return undefined
     const interval = window.setInterval(() => setClockTick(Date.now()), 250)
-    const timeout = window.setTimeout(() => {
-      const chorId = displayGame.roles?.[ROLE.CHOR]
-      const candidates = displayGame.suspectPlayerIds ?? [displayGame.roles?.[ROLE.MANTRI], chorId]
-      const guess = chorId && Math.random() < 0.65
-        ? chorId
-        : candidates.find((id) => id !== chorId) ?? candidates[Math.floor(Math.random() * candidates.length)]
-      if (guess) submitActionRef.current({ type: 'GUESS', playerId: guess })
-    }, settings.timer * 1000)
-    return () => {
-      window.clearTimeout(startTimer)
-      window.clearInterval(interval)
-      window.clearTimeout(timeout)
+    return () => window.clearInterval(interval)
+  }, [displayGame.phase, displayGame.investigationStartedAt])
+
+  useEffect(() => {
+    if (displayGame.phase === 'guess' && roundTimeLeft > 0 && roundTimeLeft <= 5
+      && displayGame.players.find(({ id }) => id === sipahiId)?.human) {
+      const timer = window.setTimeout(() => playSound('tick'), 0)
+      return () => window.clearTimeout(timer)
     }
-  }, [
-    displayGame.phase,
-    displayGame.roundNumber,
-    displayGame.roles,
-    displayGame.suspectPlayerIds,
-    displayGame.players,
-    settings.timer,
-    settings.mode,
-    roomInfo?.isHost,
-    sipahiId,
-    currentPlayerId,
-  ])
+    return undefined
+  }, [displayGame.phase, displayGame.players, roundTimeLeft, sipahiId, playSound])
+
+  useEffect(() => {
+    if (displayGame.phase !== 'shuffle') return undefined
+    const timers = [0, 900, 2450].map((delay) => window.setTimeout(() => playSound('rustle'), delay))
+    return () => timers.forEach(window.clearTimeout)
+  }, [displayGame.phase, displayGame.roundNumber, playSound])
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -787,7 +873,7 @@ function App() {
   }, [displayGame.phase, displayGame.guessWasCorrect, displayGame.roundNumber, playSound])
 
   useEffect(() => () => {
-    window.clearTimeout(shuffleTimer.current)
+    sequence.current.cancelRoundSequence()
     Object.values(emoteTimers.current).forEach(window.clearTimeout)
     Object.values(chatBubbleTimers.current).forEach(window.clearTimeout)
     window.clearTimeout(botReplyTimer.current)
@@ -805,7 +891,7 @@ function App() {
         color: index === 0 ? settings.avatarColor : theme.colors[index] ?? PLAYER_DEFS[index].color,
         seat: getPlayerSeat(index, playerCount),
         human: true,
-        crest: index === 0 ? settings.crest : 'Crown',
+        crest: index === 0 ? settings.crest : undefined,
       }))
     }
     if (settings.mode === 'online') {
@@ -820,8 +906,10 @@ function App() {
         ...player,
         initials: player.name.slice(0, 1).toUpperCase(),
         color: player.id === localPeerId ? settings.avatarColor : player.color ?? theme.colors[index] ?? PLAYER_DEFS[index].color,
+        characterStyle: player.human ? player.characterStyle : PLAYER_DEFS[index].characterStyle,
+        skinTone: player.human ? player.skinTone : PLAYER_DEFS[index].skinTone,
         seat: getPlayerSeat(index, playerCount),
-        crest: player.id === localPeerId ? settings.crest : 'Crown',
+        crest: player.id === localPeerId ? settings.crest : player.crest,
         score: 0,
       }))
     }
@@ -831,7 +919,7 @@ function App() {
       initials: player.id === 'you' ? (settings.nickname.trim() || 'You').slice(0, 1).toUpperCase() : player.initials,
       color: player.id === 'you' ? settings.avatarColor : theme.colors[index] ?? player.color,
       seat: getPlayerSeat(index, playerCount),
-      crest: player.id === 'you' ? settings.crest : 'Crown',
+      crest: player.id === 'you' ? settings.crest : undefined,
     }))
   }, [
     settings.mode,
@@ -857,7 +945,6 @@ function App() {
   }, [game.phase, game.players.length, makePlayerDefs, settings.difficulty, settings.mode, settings.playerCount, settings.rounds])
 
   const submitAction = useCallback((action) => {
-    if (action.type === 'PEEK_PRIVATE') setPeekReady(false)
     if (settings.mode === 'online' && !roomInfo?.isHost) {
       managerRef.current?.send({ type: 'action', action })
     } else {
@@ -870,12 +957,6 @@ function App() {
   const startRound = useCallback(() => {
     activateAudio()
     vibrate()
-    setPassedPlayerId(null)
-    setPeekedPlayerId(null)
-    setPeekReady(false)
-    window.clearTimeout(shuffleTimer.current)
-    setShuffleActive(true)
-    shuffleTimer.current = window.setTimeout(() => setShuffleActive(false), 1350)
     if (settings.mode === 'online' && !roomInfo?.isHost) {
       managerRef.current?.send({ type: 'action', action: { type: 'NEXT_ROUND' } })
       return
@@ -893,12 +974,15 @@ function App() {
     dispatch({
       type: 'START_ROUND',
       roles: dealRoles(players),
+      investigationSeconds: settings.timer,
+      sequenceId: createChatId(),
     })
   }, [
     activateAudio,
     vibrate,
     settings.mode,
     settings.rounds,
+    settings.timer,
     settings.difficulty,
     game.phase,
     game.players,
@@ -907,11 +991,16 @@ function App() {
   ])
   useEffect(() => {
     startRoundRef.current = startRound
-    submitActionRef.current = submitAction
-  }, [startRound, submitAction])
+  }, [startRound])
 
   const updateLobbySetting = useCallback((key, value) => {
     if (key === 'mode' && value !== settingsRef.current.mode) {
+      sequence.current.cancelRoundSequence()
+      voiceGate.current?.resolve()
+      voiceGate.current = null
+      voiceAcks.current.clear()
+      stopChantVoice()
+      audioEngine.current?.stopChant()
       resetChat()
       if (value !== 'online' && settingsRef.current.mode === 'online') {
         managerRef.current?.close()
@@ -925,32 +1014,34 @@ function App() {
   }, [resetChat, updateSetting])
 
   const createRoom = useCallback(async () => {
+    activateAudio()
     resetChat()
     setRoomError('')
     setRoomStatus('connecting')
     try {
-      await managerRef.current.createRoom({ name: settings.nickname.trim() || 'Host', color: settings.avatarColor })
+      await managerRef.current.createRoom({ name: settings.nickname.trim() || 'Host', color: settings.avatarColor, characterStyle: settings.characterStyle, skinTone: settings.skinTone })
       setRoomStatus('hosting')
     } catch (error) {
       console.error('Unable to create the multiplayer room.', error)
       setRoomStatus('idle')
       setRoomError(error.message || 'Could not create a room. Try again.')
     }
-  }, [settings.nickname, settings.avatarColor, resetChat])
+  }, [activateAudio, settings.nickname, settings.avatarColor, settings.characterStyle, settings.skinTone, resetChat])
 
   const joinRoom = useCallback(async (code) => {
+    activateAudio()
     resetChat()
     setRoomError('')
     setRoomStatus('connecting')
     try {
-      await managerRef.current.joinRoom(code, { name: settings.nickname.trim() || 'Guest', color: settings.avatarColor })
+      await managerRef.current.joinRoom(code, { name: settings.nickname.trim() || 'Guest', color: settings.avatarColor, characterStyle: settings.characterStyle, skinTone: settings.skinTone })
       setRoomStatus('connected')
     } catch (error) {
       console.error('Unable to join the multiplayer room.', error)
       setRoomStatus('idle')
       setRoomError(error.message || 'Could not join that room. Check the code.')
     }
-  }, [settings.nickname, settings.avatarColor, resetChat])
+  }, [activateAudio, settings.nickname, settings.avatarColor, settings.characterStyle, settings.skinTone, resetChat])
 
   useEffect(() => {
     const code = new URLSearchParams(window.location.search).get('room')
@@ -966,8 +1057,7 @@ function App() {
   const dispatchOnlineAction = (action) => submitAction(action)
 
   const restartGame = (playerCount = settings.playerCount) => {
-    window.clearTimeout(automationTimer.current)
-    window.clearTimeout(shuffleTimer.current)
+    sequence.current.cancelRoundSequence()
     Object.values(emoteTimers.current).forEach(window.clearTimeout)
     emoteTimers.current = {}
     stopChantVoice()
@@ -976,16 +1066,11 @@ function App() {
     resetChat()
     setScoreboardOpen(false)
     setRemoteGame(null)
-    setPeekedPlayerId(null)
-    setPeekReady(false)
-    setPassedPlayerId(null)
     setEmotes({})
     setNervousPlayerIds([])
-    setEmoteOpen(false)
-    setTimerStartedAt(0)
     lastBanterKey.current = ''
-    setShuffleActive(false)
-    if (settings.mode === 'online' && !roomInfo?.isHost) {
+    const leavingRoom = settings.mode === 'online' && !roomInfo?.isHost
+    if (leavingRoom) {
       managerRef.current?.close()
       setRoomInfo(null)
       setLocalPeerId(null)
@@ -994,11 +1079,18 @@ function App() {
       const freshGame = createGame(makePlayerDefs(playerCount), { mode: settings.mode, roundLimit: settings.rounds })
       managerRef.current?.publishGame({ ...freshGame, language: settings.language })
     }
-    dispatch({ type: 'RESTART', players: makePlayerDefs(playerCount), mode: settings.mode, roundLimit: settings.rounds, difficulty: settings.difficulty })
+    dispatch({
+      type: 'RESTART',
+      players: leavingRoom ? PLAYER_DEFS.slice(0, playerCount) : makePlayerDefs(playerCount),
+      mode: leavingRoom ? 'solo' : settings.mode,
+      roundLimit: settings.rounds,
+      difficulty: settings.difficulty,
+    })
   }
 
   const selectPlayerCount = (playerCount) => {
     if (playerCount === settings.playerCount) return
+    if (isRemoteClient || (settings.mode === 'online' && roomInfo?.isHost && roomInfo.players.length > playerCount)) return
     if (displayGame.phase !== 'lobby') {
       if (!window.confirm(`${t('freshGame')}?`)) return
       restartGame(playerCount)
@@ -1016,7 +1108,6 @@ function App() {
       2400,
     )
     if (settings.mode === 'online') managerRef.current?.send({ type: 'emote', playerId, emote })
-    setEmoteOpen(false)
   }
 
   const sendChatMessage = (text) => {
@@ -1050,35 +1141,9 @@ function App() {
     scheduleBotMessage(responder, response, delay)
   }
 
-  const toggleChatMute = () => {
-    const next = !chatMutedRef.current
-    chatMutedRef.current = next
-    setChatMuted(next)
-    if (next) {
-      Object.values(chatBubbleTimers.current).forEach(window.clearTimeout)
-      chatBubbleTimers.current = {}
-      setSpeechBubbles([])
-    }
-  }
-
-  const statusText = {
-    lobby: t('lobbyStatus'),
-    'private-peek': t('privatePeekStatus'),
-    'reveal-king': kingId === currentPlayerId ? t('kingReadyStatus') : t('kingBotStatus'),
-    'king-revealed': t('kingCallout'),
-    'reveal-rani': t('raniStatus'),
-    'rani-revealed': t('raniCallout'),
-    'reveal-sipahi': t('sipahiStatus'),
-    'sipahi-revealed': t(displayPlayerCount === 5 ? 'sipahiCallout5' : 'sipahiCallout4'),
-    chant: t('chantStatus'),
-    guess: sipahiId === currentPlayerId ? t('guessStatus') : t('botStatus'),
-    'reveal-accused': t('suspense'),
-    'reveal-remaining': t('suspense'),
-    result: displayGame.guessWasCorrect ? t('correctStatus') : t('wrongStatus'),
-  }[displayGame.phase]
-
   const messageGame = {
     ...displayGame,
+    chatOpen,
     language: settings.language,
     settings,
     updateSetting: updateLobbySetting,
@@ -1092,9 +1157,27 @@ function App() {
     isRemoteClient,
   }
 
+  const actionMessage = (
+    <ActionMessage
+      game={messageGame}
+      currentPlayerId={currentPlayerId}
+      localPrivacy={settings.mode === 'local'}
+      onStart={startRound}
+      onReveal={() => submitAction({
+        type: displayGame.phase === 'private-peek' ? 'OPEN_PRIVATE' : revealActionType,
+        playerId: displayGame.phase === 'private-peek' ? displayGame.privatePeekQueue?.[0] : undefined,
+      })}
+      onSelect={(playerId) => submitAction({ type: 'SELECT_SUSPECT', playerId })}
+      onGuess={(playerId) => submitAction({ type: 'GUESS', playerId })}
+      onNext={startRound}
+      onRestart={() => restartGame()}
+      onShowLeaderboard={() => setScoreboardOpen(true)}
+    />
+  )
+
   return (
     <main
-      className={`game-shell${displayGame.phase !== 'lobby' ? ' has-action-dock' : ` lobby-mode-${settings.mode}`}${scoreboardOpen ? ' mobile-scoreboard-open' : ''}`}
+      className={`game-shell${displayGame.phase !== 'lobby' ? ' has-action-dock' : ` lobby-mode-${settings.mode}`}${scoreboardOpen ? ' mobile-scoreboard-open' : ''}${chatOpen ? ' chat-open' : ''}`}
       dir={direction}
       style={{ '--theme-bg': (THEMES[settings.theme] ?? THEMES.sandstone).background }}
     >
@@ -1106,27 +1189,26 @@ function App() {
         <div className="topbar-meta"><span className="live-dot" /> {t(displayPlayerCount === 5 ? 'tableForFive' : 'tableForFour')}</div>
         <div className="topbar-round" aria-label={`${t('roundLabel')} ${Math.max(1, displayGame.roundNumber)} of ${displayGame.phase === 'lobby' ? settings.rounds : displayGame.roundLimit}`}>
           <span>{t('roundLabel')}</span>
-          <strong>{String(Math.max(1, displayGame.roundNumber)).padStart(2, '0')} / {displayGame.phase === 'lobby' ? settings.rounds : displayGame.roundLimit}</strong>
+          <strong>{String(Math.max(1, displayGame.roundNumber)).padStart(2, '0')} / {String(displayGame.phase === 'lobby' ? settings.rounds : displayGame.roundLimit).padStart(2, '0')}</strong>
           <b>{displayPlayerCount}P</b>
         </div>
         <div className="header-actions">
-          <button className="icon-button" type="button" onClick={() => { activateAudio(); setMuted((value) => !value) }} aria-label={muted ? t('unmute') : t('mute')}>
+          <button
+            className={`icon-button leaderboard-toggle${scoreboardOpen ? ' selected' : ''}`}
+            type="button"
+            onClick={() => setScoreboardOpen((open) => !open)}
+            aria-label={t('leaderboard')}
+            aria-expanded={scoreboardOpen}
+            aria-controls="leaderboard-dialog"
+            title={t('leaderboard')}
+          >
+            <Trophy size={17} />
+          </button>
+          <button className="icon-button" type="button" onClick={() => { activateAudio(); if (!muted) { stopChantVoice(); audioEngine.current?.stopChant() } setMuted((value) => !value) }} aria-label={muted ? t('unmute') : t('mute')}>
             {muted ? <VolumeX size={16} /> : <Volume2 size={16} />}
           </button>
           <button className="icon-button" type="button" onClick={() => setGuideOpen(true)} aria-label={t('guide')} title={t('guide')}><CircleHelp size={17} /></button>
           <button className="icon-button" type="button" onClick={() => setSettingsOpen(true)} aria-label={t('settings')} title={t('settings')}><Settings size={16} /></button>
-          {displayGame.phase !== 'lobby' && (
-            <button
-              className={`icon-button mobile-score-toggle${scoreboardOpen ? ' selected' : ''}`}
-              type="button"
-              onClick={() => setScoreboardOpen((open) => !open)}
-              aria-label={t('players')}
-              aria-expanded={scoreboardOpen}
-              title={t('players')}
-            >
-              <UsersRound size={16} />
-            </button>
-          )}
           <button className="icon-button restart-button" type="button" onClick={() => restartGame()} aria-label={t('freshGame')} title={t('freshGame')}><RotateCcw size={15} /></button>
         </div>
       </header>
@@ -1143,26 +1225,6 @@ function App() {
         </div>
       </section>
 
-      <div className="player-count-picker">
-        <p className="eyebrow">{t('playerVariant')}</p>
-        <div className="player-count-options" role="group" aria-label={t('playerVariant')}>
-          {[4, 5].map((count) => (
-            <button
-              type="button"
-              className={`player-count-option${settings.playerCount === count ? ' selected' : ''}`}
-              key={count}
-              disabled={isRemoteClient || (
-                settings.mode === 'online' && roomInfo?.isHost && roomInfo.players.length > count
-              )}
-              aria-pressed={settings.playerCount === count}
-              onClick={() => selectPlayerCount(count)}
-            >
-              {t(count === 4 ? 'fourPlayers' : 'fivePlayers')}
-            </button>
-          ))}
-        </div>
-      </div>
-
       <section className="game-layout" aria-label={t('gameBoard')}>
         <div className="arena-card">
           <div className="arena-heading">
@@ -1177,6 +1239,8 @@ function App() {
                 fontsReady={fontsReady}
                 roundNumber={displayGame.roundNumber}
                 focusPlayerId={focusPlayerId}
+                homePlayerId={currentPlayerId ?? displayPlayers.find(({ human }) => human)?.id}
+                cameraResetKey={cameraResetKey}
                 players={displayPlayers}
                 playerCount={displayPlayerCount}
                 seatAnchorRefs={seatAnchorRefs}
@@ -1184,9 +1248,9 @@ function App() {
                 revealedPlayers={displayGame.revealedPlayers}
                 rankByPlayer={rankByPlayer}
                 guessWasCorrect={displayGame.guessWasCorrect}
-                shuffleActive={shuffleActive}
-                speechBubbles={chatMuted ? [] : speechBubbles}
+                shuffleActive={displayGame.phase === 'shuffle'}
                 themeId={settings.theme}
+                tableStyle={settings.tableStyle}
                 quality={settings.graphics}
                 celebrate={Boolean(displayGame.isComplete)}
                 winnerSeat={displayLeaderboard[0]?.seat}
@@ -1195,6 +1259,7 @@ function App() {
                 guessablePlayerIds={guessablePlayerIds}
                 suspectPlayerIds={displayGame.suspectPlayerIds}
                 guessedPlayerId={displayGame.guessedPlayerId}
+                targetedPlayerId={displayGame.targetedPlayerId}
                 roleLabels={{
                   raja: translateRole(settings.language, ROLE.RAJA),
                   rani: translateRole(settings.language, ROLE.RANI),
@@ -1202,8 +1267,8 @@ function App() {
                   chor: translateRole(settings.language, ROLE.CHOR),
                   sipahi: translateRole(settings.language, ROLE.SIPAHI),
                 }}
-                onReveal={() => dispatchOnlineAction({ type: revealActionType })}
-                onGuess={(playerId) => dispatchOnlineAction({ type: 'GUESS', playerId })}
+                onReveal={() => dispatchOnlineAction({ type: 'OPEN_PRIVATE', playerId: currentPlayerId })}
+                onGuess={(playerId) => dispatchOnlineAction({ type: 'SELECT_SUSPECT', playerId })}
               />
             </Suspense>
             <div className="seat-overlay-layer">
@@ -1222,84 +1287,69 @@ function App() {
               ))}
             </div>
             <div className="realm-signature">A Realm by Asif</div>
-            <div className="table-caption"><span>✦</span> {displayGame.phase === 'lobby' ? t('courtyard') : displayGame.phase === 'chant' ? t('chant') : displayGame.phase === 'guess' ? t('whoIsChor') : displayGame.phase === 'result' ? t('rolesRevealed') : t('privatePeekStatus')} <span>✦</span></div>
-            {displayGame.phase === 'guess' && settings.timer > 0 && <div className="turn-timer">{roundTimeLeft}s</div>}
-            <div className="arena-status"><span className="status-icon"><Crown size={15} /></span>{statusText}</div>
-            {displayGame.phase !== 'lobby' && (
-              <div className="emote-wrapper">
-                {emoteOpen && <div className="emote-wheel">{EMOTES.map((emote) => <button key={emote} type="button" onClick={() => triggerEmote(emote)}>{emote}</button>)}</div>}
-                <button className="emote-trigger" type="button" onClick={() => setEmoteOpen((value) => !value)} aria-label="Open reaction emotes">☺</button>
+            {displayGame.phase === 'guess' && (
+              <div className={`investigation-clock${roundTimeLeft <= 5 ? ' timer-warning' : ''}`} aria-label={`${t('timer')}: ${roundTimeLeft}s`}>
+                <span aria-hidden="true">◷</span> {roundTimeLeft}s
               </div>
             )}
+            {chatOpen && displayGame.phase !== 'lobby' && <div className={`chat-action-strip${displayGame.phase === 'guess' ? ' below-clock' : ''}`}>{actionMessage}</div>}
           </div>
         </div>
 
         <aside className="side-panel">
-          <div className="panel-title">
-            <div><p className="eyebrow">{displayGame.phase === 'result' ? t('finalStandings') : t('yourCourt')}</p><h2>{t('players')} <span>{String(displayGame.players.length).padStart(2, '0')}</span></h2></div>
-            <span className="scoring-label">{displayGame.roundNumber ? `${t('roundShort')} ${displayGame.roundNumber}` : t('lobbyShort')}</span>
-          </div>
-          <div className="player-list">
-            {displayLeaderboard.map((player) => (
-              <PlayerRow
-                key={player.id}
-                player={player}
-                rank={player.rank}
-                role={getRoleForPlayer(displayGame, player.id)
-                  ? { ...getRoleForPlayer(displayGame, player.id), name: translateRole(settings.language, rolesByPlayer[player.id]) }
-                  : null}
-                canGuess={displayGame.phase === 'guess' && sipahiId === currentPlayerId
-                  && (displayGame.suspectPlayerIds ?? [ministerId, displayGame.roles?.[ROLE.CHOR]]).includes(player.id)}
-                onGuess={(playerId) => dispatchOnlineAction({ type: 'GUESS', playerId })}
-                guessedPlayerId={displayGame.guessedPlayerId}
-                phase={displayGame.phase}
-                direction={settings.language}
-              />
+          {!chatOpen && <div className="chat-toast-slot" aria-live="polite">
+            {speechBubbles.filter((message) => message.playerId !== currentPlayerId).slice(-1).map((message) => (
+              <div className="chat-toast" key={message.id}><strong>{message.playerName}</strong> {message.text}</div>
             ))}
-          </div>
-          <AnimatePresence mode="wait" initial={false}>
-            <motion.div
-              className="action-message"
-              key={`${displayGame.phase}-${isRemoteClient ? 'remote' : 'local'}`}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -6 }}
-              transition={{ duration: 0.2 }}
-            >
-              <ActionMessage
-                game={messageGame}
-                currentPlayerId={currentPlayerId}
-                localPrivacy={settings.mode === 'local'}
-                onStart={startRound}
-                onReveal={() => submitAction({
-                  type: displayGame.phase === 'private-peek' ? 'PEEK_PRIVATE' : revealActionType,
-                  playerId: displayGame.phase === 'private-peek' ? displayGame.privatePeekQueue?.[0] : undefined,
-                })}
-                onGuess={(playerId) => submitAction({ type: 'GUESS', playerId })}
-                onNext={startRound}
-                onRestart={() => restartGame()}
-                peekReady={peekReady}
-              />
-            </motion.div>
-          </AnimatePresence>
-          <p className="privacy-note"><span /> {audioUnavailable ? t('audioUnavailable') : t('privacy')}</p>
+          </div>}
+          <ChatDrawer
+            messages={chatMessages}
+            currentPlayerId={currentPlayerId}
+            language={settings.language}
+            onSend={sendChatMessage}
+            botTyping={botTyping}
+            open={chatOpen}
+            onOpenChange={(open) => {
+              chatOpenRef.current = open
+              setChatOpen(open)
+              if (open) setSpeechBubbles([])
+            }}
+            onReaction={triggerEmote}
+          />
+            {(!chatOpen || displayGame.phase === 'lobby') && <div className="action-message">{actionMessage}</div>}
+          {audioUnavailable && <p className="audio-error" role="status">{t('audioUnavailable')}</p>}
         </aside>
       </section>
       <footer className="footer-line"><span>AN OLD INDIAN COURTYARD GAME</span><span>✦ &nbsp; MAY THE WISEST WIN &nbsp; ✦</span><span>EST. SINCE FOREVER</span></footer>
 
       <Suspense fallback={null}>
-        {settingsOpen && <SettingsModal open onClose={() => setSettingsOpen(false)} settings={settings} updateSetting={updateSetting} />}
+        {settingsOpen && <SettingsModal open onClose={() => setSettingsOpen(false)} settings={settings} updateSetting={updateSetting} onPlayerCountChange={selectPlayerCount} playerCountDisabled={isRemoteClient} minimumPlayerCount={settings.mode === 'online' && roomInfo?.isHost ? roomInfo.players.length : 0} onActivateAudio={activateAudio} onResetCamera={() => setCameraResetKey((value) => value + 1)} onModeChange={(mode) => updateLobbySetting('mode', mode)} modeDisabled={displayGame.phase !== 'lobby'} />}
         {guideOpen && <HowToPlay open onClose={() => setGuideOpen(false)} language={settings.language} />}
       </Suspense>
-      <ChatDrawer
-        messages={chatMessages}
-        currentPlayerId={currentPlayerId}
-        language={settings.language}
-        muted={chatMuted}
-        onToggleMute={toggleChatMute}
-        onSend={sendChatMessage}
-        botTyping={botTyping}
-      />
+      {scoreboardOpen && (
+        <div className="leaderboard-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) setScoreboardOpen(false) }}>
+          <section id="leaderboard-dialog" className="scoreboard-panel" role="dialog" aria-modal="true" aria-labelledby="leaderboard-title">
+            <header className="leaderboard-heading">
+              <div><span className="leaderboard-kicker"><Trophy size={15} /> {t('yourCourt')}</span><h2 id="leaderboard-title">{t('leaderboard')}</h2></div>
+              <button className="icon-button" type="button" onClick={() => setScoreboardOpen(false)} aria-label={t('close')} autoFocus><X size={17} /></button>
+            </header>
+            <div className="leaderboard-list">
+              {displayLeaderboard.map((player) => (
+                <PlayerRow
+                  key={player.id}
+                  player={player}
+                  rank={player.rank}
+                  role={getRoleForPlayer(displayGame, player.id)
+                    ? { ...getRoleForPlayer(displayGame, player.id), id: rolesByPlayer[player.id], name: translateRole(settings.language, rolesByPlayer[player.id]) }
+                    : null}
+                  hiddenRole={displayGame.phase !== 'lobby' && !getRoleForPlayer(displayGame, player.id)}
+                  language={settings.language}
+                />
+              ))}
+            </div>
+          </section>
+        </div>
+      )}
 
       <AnimatePresence>
         {privacyCurtainNeeded && (
@@ -1307,30 +1357,20 @@ function App() {
             <div className="curtain-card">
               <span className="curtain-crown"><Crown size={22} /></span>
               <p className="eyebrow">{t('privateChit')}</p>
-              <h2>{peekedPlayerId === activeRevealPlayer
+              <h2>{displayGame.privatePeekOpen
                 ? translateRole(settings.language, rolesByPlayer[activeRevealPlayer]) ?? 'Your secret role'
                 : `${t('passTo')} ${displayGame.players.find(({ id }) => id === activeRevealPlayer)?.name}`}</h2>
-              <p>{peekedPlayerId === activeRevealPlayer ? t('keepRoleSecret') : t('tapToPeek')}</p>
-              <button
+              <p>{displayGame.privatePeekOpen ? t('keepRoleSecret') : t('tapToPeek')}</p>
+              {displayGame.privatePeekOpen ? <><small className="peek-caption">{t('memorizing')}</small><div className="peek-progress" role="progressbar" aria-label={t('memorizing')}><span /></div></> : <button
                 className="primary-button"
                 type="button"
-                disabled={peekedPlayerId === activeRevealPlayer && displayGame.phase === 'private-peek' && !peekReady}
                 onClick={() => {
-                  if (peekedPlayerId !== activeRevealPlayer) {
-                    setPeekedPlayerId(activeRevealPlayer)
-                    playSound('rustle')
-                  } else if (displayGame.phase === 'private-peek') {
-                    submitAction({ type: 'PEEK_PRIVATE', playerId: activeRevealPlayer })
-                    setPeekedPlayerId(null)
-                    setPeekReady(false)
-                  } else {
-                    setPeekedPlayerId(null)
-                    setPassedPlayerId(activeRevealPlayer)
-                  }
+                  submitAction({ type: 'OPEN_PRIVATE', playerId: activeRevealPlayer })
+                  playSound('rustle')
                 }}
               >
-                {peekedPlayerId === activeRevealPlayer ? t('hideAndPass') : t('tapToPeek')} <ArrowUpRight size={16} />
-              </button>
+                {t('tapToPeek')} <ArrowUpRight size={16} />
+              </button>}
             </div>
           </motion.div>
         )}

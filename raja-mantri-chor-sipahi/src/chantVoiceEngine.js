@@ -15,11 +15,63 @@ export const CHANTS = {
   bho: ['hi-IN', 'सिपाही, सिपाही, चोर के पकड़ो!'],
 }
 
-export function selectChantVoice(voices, language) {
-  const [locale] = CHANTS[language] ?? CHANTS.en
+export const RANI_CALLS = {
+  en: 'Yes, Your Majesty! Where is my soldier?',
+  hinglish: 'Ji Maharaj! Mera Sipahi Kaun?',
+  hi: 'जी महाराज! मेरा सिपाही कौन है?',
+  bn: 'জি মহারাজ! আমার সিপাহী কে?',
+  te: 'అలాగే మహారాజా! నా సిపాయి ఎవరు?',
+  mr: 'जी महाराज! माझा शिपाई कोण आहे?',
+  ta: 'சரி மகாராஜா! என் சிப்பாய் யார்?',
+  gu: 'જી મહારાજ! મારો સિપાહી કોણ છે?',
+  kn: 'ಆಯಿತು ಮಹಾರಾಜರೇ! ನನ್ನ ಸಿಪಾಯಿ ಯಾರು?',
+  ml: 'ശരി മഹാരാജാവേ! എന്റെ ശിപായി ആരാണ്?',
+  pa: 'ਜੀ ਮਹਾਰਾਜ! ਮੇਰਾ ਸਿਪਾਹੀ ਕੌਣ ਹੈ?',
+  or: 'ଆଜ୍ଞା ମହାରାଜ! ମୋ ସିପାହୀ କିଏ?',
+  ur: 'جی مہاراج! میرا سپاہی کون ہے؟',
+  bho: 'जी महाराज! हमार सिपाही के ह?',
+}
+
+const FEMALE = /female|woman|lekha|veena|kalpana|heera|priya|swara|neerja|aditi|raveena|zira|samantha|victoria|karen|moira|tessa|google हिन्दी/i
+const MALE = /\bmale\b|\bman\b|ravi|hemant|madhur/i
+const voiceCaches = new WeakMap()
+
+function availableVoices(synthesis) {
+  if (!voiceCaches.has(synthesis)) {
+    const cache = { voices: synthesis.getVoices() }
+    const refresh = () => { cache.voices = synthesis.getVoices() }
+    if (synthesis.addEventListener) synthesis.addEventListener('voiceschanged', refresh)
+    else {
+      const previous = synthesis.onvoiceschanged
+      synthesis.onvoiceschanged = (event) => {
+        previous?.call(synthesis, event)
+        refresh()
+      }
+    }
+    voiceCaches.set(synthesis, cache)
+  }
+  const cache = voiceCaches.get(synthesis)
+  const voices = synthesis.getVoices()
+  if (voices.length) cache.voices = voices
+  return cache.voices
+}
+
+export function prepareSpeechVoices() {
+  if (window.speechSynthesis) availableVoices(window.speechSynthesis)
+}
+
+export function selectChantVoice(voices, language, role) {
+  const locale = CHANTS[language]?.[0] ?? (language?.includes('-') ? language : CHANTS.en[0])
   const base = locale.split('-')[0].toLowerCase()
-  return voices.find((voice) => voice.lang.toLowerCase() === locale.toLowerCase())
-    ?? voices.find((voice) => voice.lang.toLowerCase().split('-')[0] === base)
+  const matching = voices.filter((voice) => voice.lang.toLowerCase().split('-')[0] === base)
+  const preferred = role === 'rani' ? FEMALE : role === 'raja' ? MALE : null
+  const candidates = preferred ? matching.filter((voice) => preferred.test(`${voice.name ?? ''} ${voice.voiceURI ?? ''}`)) : matching
+  if (role === 'rani' && !candidates.length) {
+    const english = voices.filter((voice) => /^en-(in|gb|us)$/i.test(voice.lang) && FEMALE.test(`${voice.name ?? ''} ${voice.voiceURI ?? ''}`))
+    return english.find((voice) => /^en-in$/i.test(voice.lang)) ?? english[0]
+  }
+  const choices = candidates.length ? candidates : matching
+  return choices.find((voice) => voice.lang.toLowerCase() === locale.toLowerCase()) ?? choices[0]
 }
 
 export function speakChant(language, volume, onError) {
@@ -43,4 +95,31 @@ export function speakChant(language, volume, onError) {
 
 export function stopChantVoice() {
   window.speechSynthesis?.cancel()
+}
+
+export function speakPhase(text, language, volume, onError, role) {
+  const synthesis = window.speechSynthesis
+  if (!synthesis || !window.SpeechSynthesisUtterance) return null
+  const voice = selectChantVoice(availableVoices(synthesis), language, role)
+  if (!voice) return null
+  const utterance = new window.SpeechSynthesisUtterance(text)
+  utterance.voice = voice
+  utterance.lang = voice.lang
+  utterance.pitch = role === 'rani' ? 1.32 : role === 'raja' ? 0.85 : role === 'sipahi' ? 0.95 : 1.05
+  utterance.rate = role === 'rani' ? 0.95 : role === 'raja' ? 0.92 : role === 'sipahi' ? 1 : 0.95
+  utterance.volume = volume
+  const done = new Promise((resolve) => {
+    utterance.onend = resolve
+    utterance.onerror = (event) => {
+      if (event.error !== 'canceled' && event.error !== 'interrupted') onError(event.error)
+      resolve()
+    }
+
+  })
+  synthesis.speak(utterance)
+  return done
+}
+
+export function speakRoleLine({ role, text, lang, volume, onError }) {
+  return speakPhase(text, lang, volume, onError, role.toLowerCase())
 }

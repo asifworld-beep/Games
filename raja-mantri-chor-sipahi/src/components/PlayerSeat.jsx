@@ -1,16 +1,15 @@
 import { AnimatePresence, motion } from 'framer-motion'
+import { AvatarMark } from './RoleIcon.jsx'
 
-export default function PlayerSeat({ player, role, active, isGuessed, emote, nervous }) {
+export default function PlayerSeat({ player, role, hiddenRole, active, isGuessed, emote, nervous, callout }) {
   return (
-    <motion.div
-      layout
+    <div
       className={`player-seat${active ? ' is-active' : ''}${nervous ? ' is-nervous' : ''}`}
-      animate={{ scale: active ? 1.06 : 1, y: active ? -3 : 0 }}
-      transition={{ type: 'spring', stiffness: 280, damping: 22 }}
     >
       {emote && <motion.span className="seat-emote" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: -8 }} exit={{ opacity: 0 }}>{emote}</motion.span>}
+      {callout && <span className="seat-callout" aria-hidden="true">{callout}</span>}
       <span className="seat-avatar" style={{ '--seat-color': player.color }}>
-        {player.crest === 'Peacock' ? 'P' : player.crest === 'Lotus' ? 'L' : player.crest === 'Sun' ? 'S' : player.initials}
+        <AvatarMark player={player} role={role} hiddenRole={hiddenRole} />
       </span>
       <span className="seat-label-group">
         <span className="seat-name">{player.name}</span>
@@ -31,6 +30,6 @@ export default function PlayerSeat({ player, role, active, isGuessed, emote, ner
       </span>
       {isGuessed && <span className="guess-marker">?</span>}
       {nervous && <span className="nervous-drop">!</span>}
-    </motion.div>
+    </div>
   )
 }

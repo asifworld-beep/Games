@@ -20,6 +20,8 @@ const fixedRoles = {
 
 function reachGuessPhase(roles = fixedRoles) {
   let state = gameReducer(createGame(), { type: 'START_ROUND', roles })
+  state = gameReducer(state, { type: 'FINISH_SHUFFLE' })
+  state = gameReducer(state, { type: 'OPEN_PRIVATE', playerId: 'you' })
   state = gameReducer(state, { type: 'PEEK_PRIVATE', playerId: 'you' })
   state = gameReducer(state, { type: 'REVEAL_KING' })
   state = gameReducer(state, { type: 'ADVANCE_REVEAL' })
@@ -42,6 +44,7 @@ function reachFivePlayerGuessPhase(guessPlayerId) {
     [ROLE.SIPAHI]: 'neel',
   }
   let state = gameReducer(createGame(players), { type: 'START_ROUND', roles })
+  state = gameReducer(state, { type: 'FINISH_SHUFFLE' })
   state = gameReducer(state, { type: 'REVEAL_KING' })
   state = gameReducer(state, { type: 'ADVANCE_REVEAL' })
   state = gameReducer(state, { type: 'REVEAL_RANI' })
@@ -84,11 +87,16 @@ test('arranges five seats symmetrically and keeps the four-player layout', () =>
 
 test('keeps Mantri and Chor hidden while Raja and Sipahi reveal in four-player mode', () => {
   let state = gameReducer(createGame(), { type: 'START_ROUND', roles: fixedRoles })
+  assert.equal(state.phase, 'shuffle')
+  assert.equal(gameReducer(state, { type: 'OPEN_PRIVATE', playerId: 'you' }), state)
+  state = gameReducer(state, { type: 'FINISH_SHUFFLE' })
   assert.equal(state.phase, 'private-peek')
   assert.equal(state.investigatorRole, 'SIPAHI')
   assert.deepEqual(state.suspectRoles, ['MANTRI', 'CHOR'])
   assert.equal(getRoleForPlayer(state, 'you'), null)
 
+  assert.equal(gameReducer(state, { type: 'PEEK_PRIVATE', playerId: 'you' }), state)
+  state = gameReducer(state, { type: 'OPEN_PRIVATE', playerId: 'you' })
   state = gameReducer(state, { type: 'PEEK_PRIVATE', playerId: 'you' })
   assert.equal(state.phase, 'reveal-king')
   assert.equal(getRoleForPlayer(state, 'you'), null)
@@ -121,6 +129,8 @@ test('five-player reveal sequence calls Rani before Sipahi', () => {
     [ROLE.SIPAHI]: 'neel',
   }
   let state = gameReducer(createGame(fivePlayerDefs), { type: 'START_ROUND', roles })
+  state = gameReducer(state, { type: 'FINISH_SHUFFLE' })
+  state = gameReducer(state, { type: 'OPEN_PRIVATE', playerId: 'you' })
   state = gameReducer(state, { type: 'PEEK_PRIVATE', playerId: 'you' })
   state = gameReducer(state, { type: 'REVEAL_KING' })
   state = gameReducer(state, { type: 'ADVANCE_REVEAL' })
@@ -141,13 +151,16 @@ test('local players must privately pass through each chit before public roles ar
   const players = createGame().players.map((player) => ({ ...player, human: true }))
   let state = gameReducer(createGame(), { type: 'CONFIGURE_GAME', players, roundLimit: 3, mode: 'local' })
   state = gameReducer(state, { type: 'START_ROUND', roles: fixedRoles })
+  state = gameReducer(state, { type: 'FINISH_SHUFFLE' })
   assert.deepEqual(state.privatePeekQueue, ['you', 'mira', 'kabir', 'asha'])
   assert.equal(gameReducer(state, { type: 'PEEK_PRIVATE', playerId: 'mira' }), state)
 
   for (const playerId of ['you', 'mira', 'kabir']) {
+    state = gameReducer(state, { type: 'OPEN_PRIVATE', playerId })
     state = gameReducer(state, { type: 'PEEK_PRIVATE', playerId })
     assert.equal(state.phase, 'private-peek')
   }
+  state = gameReducer(state, { type: 'OPEN_PRIVATE', playerId: 'asha' })
   state = gameReducer(state, { type: 'PEEK_PRIVATE', playerId: 'asha' })
   assert.equal(state.phase, 'reveal-king')
   assert.deepEqual(state.revealedPlayers, [])
@@ -155,11 +168,16 @@ test('local players must privately pass through each chit before public roles ar
 
 test('awards role points when Sipahi correctly arrests Chor', () => {
   let state = reachGuessPhase()
+  assert.equal(gameReducer(state, { type: 'SELECT_SUSPECT', playerId: 'you' }), state)
+  state = gameReducer(state, { type: 'SELECT_SUSPECT', playerId: 'asha' })
+  assert.equal(state.phase, 'guess')
+  assert.equal(state.targetedPlayerId, 'asha')
   state = gameReducer(state, { type: 'GUESS', playerId: 'asha' })
   assert.equal(state.phase, 'reveal-accused')
   assert.equal(getRoleForPlayer(state, 'asha').name, 'Chor')
   assert.equal(getRoleForPlayer(state, 'mira'), null)
   assert.ok(state.players.every(({ score }) => score === 0))
+  assert.ok(state.players.every(({ roundPoints }) => roundPoints === 0))
   state = gameReducer(state, { type: 'ADVANCE_REVEAL' })
   assert.equal(state.phase, 'reveal-remaining')
   assert.equal(getRoleForPlayer(state, 'mira').name, 'Mantri')
@@ -168,6 +186,10 @@ test('awards role points when Sipahi correctly arrests Chor', () => {
   assert.equal(state.guessWasCorrect, true)
   assert.deepEqual(
     Object.fromEntries(state.players.map(({ id, score }) => [id, score])),
+    { you: 1000, mira: 800, kabir: 500, asha: 0 },
+  )
+  assert.deepEqual(
+    Object.fromEntries(state.players.map(({ id, roundPoints }) => [id, roundPoints])),
     { you: 1000, mira: 800, kabir: 500, asha: 0 },
   )
   assert.equal(getRoleForPlayer(state, 'asha').name, 'Chor')
@@ -185,6 +207,13 @@ test('transfers only Sipahi points to Chor after a wrong arrest', () => {
   assert.equal(result.players.find(({ id }) => id === 'mira').score, 800)
   assert.equal(result.players.find(({ id }) => id === 'kabir').score, 0)
   assert.equal(result.players.find(({ id }) => id === 'asha').score, 500)
+  assert.deepEqual(
+    Object.fromEntries(result.players.map(({ id, roundPoints }) => [id, roundPoints])),
+    { you: 1000, mira: 800, kabir: 0, asha: 500 },
+  )
+  const next = gameReducer(result, { type: 'START_ROUND', roles: fixedRoles })
+  assert.ok(next.players.every(({ roundPoints }) => roundPoints === 0))
+  assert.deepEqual(next.players.map(({ score }) => score), result.players.map(({ score }) => score))
   assert.equal(gameReducer(guessPhase, { type: 'GUESS', playerId: 'you' }), guessPhase)
   assert.equal(gameReducer(result, { type: 'GUESS', playerId: 'asha' }), result)
   assert.equal(gameReducer(result, { type: 'REVEAL_KING' }), result)
@@ -200,6 +229,10 @@ test('five-player scoring preserves Rani and Mantri points and transfers Sipahi 
   const wrong = reachFivePlayerGuessPhase('kabir')
   assert.deepEqual(
     Object.fromEntries(wrong.players.map(({ id, score }) => [id, score])),
+    { you: 1000, mira: 900, kabir: 800, asha: 500, neel: 0 },
+  )
+  assert.deepEqual(
+    Object.fromEntries(wrong.players.map(({ id, roundPoints }) => [id, roundPoints])),
     { you: 1000, mira: 900, kabir: 800, asha: 500, neel: 0 },
   )
 })
@@ -231,7 +264,13 @@ test('leaderboard shares ranks for ties and restart clears all game state', () =
   const ranks = getLeaderboard(players).map(({ id, rank }) => [id, rank])
   assert.deepEqual(ranks, [['you', 1], ['mira', 1], ['kabir', 3], ['asha', 3]])
 
-  const finished = gameReducer(reachGuessPhase(), { type: 'GUESS', playerId: 'asha' })
+  let finished = { ...reachGuessPhase(), roundLimit: 1 }
+  finished = gameReducer(finished, { type: 'GUESS', playerId: 'asha' })
+  finished = gameReducer(finished, { type: 'ADVANCE_REVEAL' })
+  finished = gameReducer(finished, { type: 'ADVANCE_REVEAL' })
+  assert.equal(finished.isComplete, true)
+  assert.equal(gameReducer(finished, { type: 'START_ROUND', roles: fixedRoles }), finished)
+  assert.equal(finished.players.find(({ id }) => id === 'you').score, 1000)
   const restarted = gameReducer(finished, { type: 'RESTART', players, roundLimit: 3, mode: 'local' })
   assert.equal(restarted.phase, 'lobby')
   assert.equal(restarted.roundNumber, 0)
@@ -241,6 +280,7 @@ test('leaderboard shares ranks for ties and restart clears all game state', () =
   assert.deepEqual(restarted.revealedPlayers, [])
   assert.equal(restarted.guessedPlayerId, null)
   assert.ok(restarted.players.every(({ score }) => score === 0))
+  assert.ok(restarted.players.every(({ roundPoints }) => roundPoints === 0))
 })
 
 test('supports custom round counts and changes disconnected players to bots', () => {

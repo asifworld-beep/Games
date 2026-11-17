@@ -207,6 +207,7 @@ h1 em {
 .arena canvas {
   position: absolute;
   inset: 0;
+  touch-action: none;
 }
 
 .arena-loading {
@@ -1288,55 +1289,6 @@ h1 em {
   white-space: nowrap;
 }
 
-.emote-wrapper {
-  position: absolute;
-  z-index: 5;
-  right: 12px;
-  bottom: 11px;
-}
-
-.emote-trigger {
-  display: grid;
-  width: 32px;
-  height: 32px;
-  place-items: center;
-  color: #e1cc9a;
-  border: 1px solid rgba(222, 194, 137, 0.35);
-  border-radius: 50%;
-  background: rgba(17, 26, 23, 0.91);
-  cursor: pointer;
-}
-
-.emote-wheel {
-  position: absolute;
-  right: 0;
-  bottom: 40px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  width: max-content;
-  max-width: 190px;
-  padding: 6px;
-  border: 1px solid rgba(222, 194, 137, 0.28);
-  border-radius: 8px;
-  background: rgba(18, 27, 22, 0.96);
-}
-
-.emote-wheel button {
-  padding: 6px 8px;
-  color: #e4dccb;
-  border: 0;
-  border-radius: 4px;
-  background: transparent;
-  font-size: max(0.8rem, 0.625rem);
-  text-align: start;
-  cursor: pointer;
-}
-
-.emote-wheel button:hover {
-  background: rgba(214, 183, 119, 0.11);
-}
-
 .turn-timer {
   position: absolute;
   z-index: 2;
@@ -1458,14 +1410,6 @@ h1 em {
 .chat-title strong {
   color: #eee3ce;
   font-size: max(0.8rem, 0.6875rem);
-}
-
-.chat-muted-status {
-  overflow: hidden;
-  color: #92988a;
-  font-size: max(0.8rem, 0.5rem);
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .chat-icon-button {
@@ -2032,16 +1976,6 @@ body {
     overflow: hidden;
     font-size: 0.8rem;
     text-overflow: ellipsis;
-  }
-
-  .emote-wrapper {
-    right: 10px;
-    bottom: 9px;
-  }
-
-  .emote-trigger {
-    width: 44px;
-    height: 44px;
   }
 
   .side-panel {
@@ -2671,17 +2605,6 @@ h1,
     font-size: 0.875rem;
   }
 
-  .game-shell.has-action-dock .emote-wrapper {
-    position: fixed;
-    z-index: 16;
-    right: max(12px, env(safe-area-inset-right));
-    bottom: max(10px, env(safe-area-inset-bottom));
-  }
-
-  .game-shell.has-action-dock .emote-wheel {
-    bottom: 52px;
-  }
-
   .game-shell {
     width: 100%;
     padding-right: max(12px, env(safe-area-inset-right));
@@ -2716,12 +2639,10 @@ h1,
   .icon-button,
   .chat-icon-button,
   .chat-input-row button,
-  .emote-trigger,
   .color-swatch,
   .chat-quick-chips button,
   .guess-button,
-  .guess-option,
-  .emote-wheel button {
+  .guess-option {
     min-width: 44px;
     min-height: 44px;
   }
@@ -2734,8 +2655,7 @@ h1,
   }
 
   .chat-icon-button,
-  .chat-input-row button,
-  .emote-trigger {
+  .chat-input-row button {
     width: 44px;
   }
 
@@ -3012,22 +2932,13 @@ h1,
     font-size: max(0.875rem, 1em);
   }
 
-  .game-shell.has-action-dock .emote-wrapper {
-    position: fixed;
-    z-index: 16;
-    right: max(12px, env(safe-area-inset-right));
-    bottom: max(10px, env(safe-area-inset-bottom));
-  }
-
   .icon-button,
   .chat-icon-button,
   .chat-input-row button,
-  .emote-trigger,
   .color-swatch,
   .chat-quick-chips button,
   .guess-button,
-  .guess-option,
-  .emote-wheel button {
+  .guess-option {
     min-width: 44px;
     min-height: 44px;
   }
@@ -3342,6 +3253,23 @@ h1,
   pointer-events: none;
 }
 
+.seat-callout {
+  position: absolute;
+  top: var(--callout-top, auto);
+  bottom: var(--callout-bottom, calc(100% + 5px));
+  left: 50%;
+  width: 150px;
+  padding: 5px 8px;
+  transform: translateX(calc(-50% + var(--callout-offset, 0px)));
+  color: #30291c;
+  border-radius: 12px;
+  background: #eee0be;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.3);
+  font-size: 0.8rem;
+  line-height: 1.25;
+  text-align: center;
+}
+
 @media (max-width: 520px), (orientation: landscape) and (max-height: 520px) and (max-width: 900px) {
   .game-shell:not(.has-action-dock) .intro-row {
     display: none;
@@ -3546,5 +3474,1695 @@ h1,
   .game-shell:not(.has-action-dock) .mode-tabs {
     flex-direction: column;
     align-items: flex-start;
+  }
+}
+
+/* The court and the controls have separate, non-overlapping viewport space. */
+body {
+  overflow: hidden;
+}
+
+.game-shell {
+  width: min(1200px, 100%);
+  height: 100dvh;
+  min-height: 0;
+  padding: env(safe-area-inset-top) max(8px, env(safe-area-inset-right)) env(safe-area-inset-bottom) max(8px, env(safe-area-inset-left));
+  overflow: hidden;
+}
+
+.game-shell .topbar {
+  position: static;
+  flex: 0 0 52px;
+  height: 52px;
+  min-height: 0;
+  gap: 4px;
+}
+
+.game-shell .topbar-round {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+  color: #b7ad99;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.game-shell .topbar-round strong {
+  color: #eee3ce;
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.game-shell .topbar-round b {
+  padding: 2px 4px;
+  color: #e6ca8c;
+  border: 1px solid rgba(214, 183, 119, 0.4);
+  border-radius: 999px;
+  font-size: 0.8rem;
+}
+
+.game-shell .intro-row,
+.game-shell .footer-line,
+.game-shell .topbar-meta,
+.game-shell .arena-heading,
+.game-shell .privacy-note {
+  display: none;
+}
+
+.game-shell .game-layout,
+.game-shell:not(.has-action-dock) .game-layout,
+.game-shell.has-action-dock .game-layout {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  min-height: 0;
+  gap: 0;
+}
+
+.game-shell .arena-card,
+.game-shell:not(.has-action-dock) .arena-card {
+  display: flex;
+  flex: 1 1 0;
+  align-self: stretch;
+  min-height: 0;
+  margin: 0;
+}
+
+.game-shell .arena,
+.game-shell:not(.has-action-dock) .arena {
+  flex: 1;
+  width: 100%;
+  height: auto;
+  min-height: 0;
+  border: 0;
+}
+
+.game-shell .side-panel,
+.game-shell:not(.has-action-dock) .side-panel,
+.game-shell.has-action-dock .side-panel,
+.game-shell.has-action-dock.mobile-scoreboard-open .side-panel {
+  position: relative;
+  order: 0;
+  flex: 0 0 auto;
+  align-self: stretch;
+  min-height: 0;
+  max-height: 36dvh;
+  padding: 4px 54px;
+  overflow: visible;
+  border: 0;
+  background: transparent;
+}
+
+.game-shell:not(.has-action-dock) .side-panel {
+  padding-right: 4px;
+}
+
+.game-shell .action-message,
+.game-shell.has-action-dock .action-message {
+  position: static;
+  width: 100%;
+  max-height: calc(36dvh - 8px);
+  margin: 0 auto;
+  overflow-y: auto;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  transform: none;
+}
+
+.game-shell .action-card,
+.game-shell.has-action-dock .action-card {
+  min-height: 0;
+  margin: 0;
+  padding: 3px 4px;
+  border: 0;
+  background: transparent;
+  text-align: center;
+}
+
+.game-shell .action-card h3 {
+  margin: 0 0 3px;
+  font-size: 1rem;
+  line-height: 1.2;
+}
+
+.game-shell .action-card > p,
+.game-shell .lobby-setup > .eyebrow,
+.game-shell .mode-description {
+  display: none;
+}
+
+.game-shell .action-card .primary-button {
+  width: auto;
+  min-height: 44px;
+  margin: 2px auto 0;
+}
+
+.game-shell .lobby-setup,
+.game-shell:not(.has-action-dock) .lobby-setup {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 0;
+}
+
+.game-shell .mode-tabs,
+.game-shell:not(.has-action-dock) .mode-tabs {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0;
+}
+
+.game-shell .mode-card,
+.game-shell:not(.has-action-dock) .mode-card {
+  flex-direction: row;
+  min-height: 44px;
+  padding: 3px 5px;
+  font-size: 0.8rem;
+}
+
+.game-shell .lobby-start,
+.game-shell:not(.has-action-dock) .lobby-start {
+  width: auto;
+  min-height: 44px;
+  margin: 0;
+}
+
+.game-shell .guess-options {
+  flex-direction: row;
+  justify-content: center;
+  gap: 4px;
+}
+
+.game-shell .guess-option {
+  min-width: 0;
+  min-height: 44px;
+}
+
+.game-shell .guess-option.selected {
+  border-color: #e8c66f;
+  background: rgba(232, 198, 111, 0.2);
+}
+
+.round-scores {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 2px 8px;
+  color: #d7c7a6;
+  font-size: 0.8rem;
+}
+
+.audio-error {
+  margin: 0;
+  color: #ffcf96;
+  font-size: 0.8rem;
+  text-align: center;
+}
+
+.game-shell .mobile-score-toggle,
+.game-shell.has-action-dock .restart-button {
+  display: grid;
+}
+
+.game-shell .scoreboard-panel {
+  position: fixed;
+  z-index: 20;
+  right: max(8px, env(safe-area-inset-right));
+  bottom: calc(110px + env(safe-area-inset-bottom));
+  width: min(320px, calc(100vw - 16px));
+  max-height: 65dvh;
+  padding: 12px;
+  overflow-y: auto;
+  border: 1px solid rgba(228, 213, 181, 0.2);
+  border-radius: 12px;
+  background: rgba(26, 34, 29, 0.98);
+}
+
+.chat-drawer {
+  bottom: calc(4px + env(safe-area-inset-bottom));
+  left: max(11px, env(safe-area-inset-left));
+}
+
+.peek-progress {
+  width: min(180px, 100%);
+  height: 6px;
+  margin: 8px auto;
+  overflow: hidden;
+  border-radius: 10px;
+  background: rgba(232, 198, 111, 0.2);
+}
+
+.peek-caption {
+  display: block;
+  color: #d7c7a6;
+  font-size: 0.8rem;
+}
+
+.peek-progress span {
+  display: block;
+  height: 100%;
+  background: #e8c66f;
+  transform-origin: left;
+  animation: memorize-role 4s linear forwards;
+}
+
+@keyframes memorize-role {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+.timer-warning {
+  color: #ffb267 !important;
+  animation: timer-pulse 1s ease-in-out infinite alternate;
+}
+
+@keyframes timer-pulse {
+  to { opacity: 0.55; }
+}
+
+.seat-timer {
+  color: #f2d189;
+  font-size: 0.8rem;
+}
+
+.avatar-preview {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 120px;
+  color: #e8d4a9;
+}
+
+.avatar-preview canvas {
+  border-radius: 8px;
+}
+
+.avatar-preview > div {
+  width: 100px !important;
+  height: 120px !important;
+  flex: none;
+}
+
+@media (max-width: 600px) {
+  .game-shell .brand > span:last-child,
+  .game-shell .topbar-round > span:first-child {
+    display: none;
+  }
+  .game-shell .header-actions {
+    gap: 0;
+  }
+  .game-shell .icon-button {
+    min-width: 44px;
+    min-height: 44px;
+  }
+  .game-shell .mode-card svg {
+    display: none;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 520px) {
+  .game-shell.lobby-mode-online .lobby-setup:has(.join-room-row) {
+    flex-direction: column;
+    flex-wrap: nowrap;
+  }
+
+  .game-shell.lobby-mode-online .online-room-panel:has(.join-room-row) {
+    flex: 0 0 auto;
+    flex-direction: row;
+    align-items: center;
+    min-width: 0;
+  }
+
+  .game-shell.lobby-mode-online .online-notice {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+
+  .game-shell.lobby-mode-online .join-room-row {
+    min-width: 0;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 520px) {
+  .game-shell .topbar,
+  .game-shell:not(.has-action-dock) .topbar,
+  .game-shell.has-action-dock .topbar {
+    flex-basis: 44px;
+    height: 44px;
+    min-height: 44px;
+    max-height: 44px;
+  }
+  .game-shell .side-panel,
+  .game-shell:not(.has-action-dock) .side-panel,
+  .game-shell.has-action-dock .side-panel {
+    max-height: 40dvh;
+  }
+  .game-shell .action-message,
+  .game-shell.has-action-dock .action-message {
+    max-height: calc(40dvh - 8px);
+  }
+  .game-shell .lobby-setup,
+  .game-shell:not(.has-action-dock) .lobby-setup {
+    flex-direction: row;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+}
+
+.game-shell .topbar {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  justify-content: initial;
+}
+
+.game-shell .topbar-round {
+  justify-content: center;
+  margin: 0;
+}
+
+.game-shell .header-actions {
+  display: flex;
+  gap: 0;
+}
+
+.game-shell .header-actions .icon-button {
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
+}
+
+.leaderboard-toggle.selected {
+  color: #f0d291;
+  border-color: rgba(232, 198, 111, 0.7);
+  background: rgba(214, 183, 119, 0.14);
+}
+
+.investigation-clock {
+  position: absolute;
+  z-index: 4;
+  top: 10px;
+  left: 50%;
+  display: flex;
+  min-width: 64px;
+  height: 32px;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  transform: translateX(-50%);
+  color: #f3d9a1;
+  border: 1px solid rgba(231, 195, 115, 0.5);
+  border-radius: 999px;
+  background: rgba(15, 29, 23, 0.88);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.25);
+  font-size: 0.875rem;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+}
+
+.game-shell .side-panel,
+.game-shell:not(.has-action-dock) .side-panel,
+.game-shell.has-action-dock .side-panel {
+  min-height: 52px;
+}
+
+.game-shell .chat-drawer {
+  position: absolute;
+  bottom: 4px;
+  left: 3px;
+}
+
+.game-shell .chat-toggle {
+  width: 44px;
+  height: 44px;
+}
+
+.game-shell .mode-tabs,
+.game-shell:not(.has-action-dock) .mode-tabs {
+  width: min(100%, max-content);
+  max-width: 100%;
+  justify-content: flex-start;
+  flex-wrap: nowrap;
+  gap: 2px;
+  margin-inline: auto;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.game-shell .mode-card,
+.game-shell:not(.has-action-dock) .mode-card {
+  flex: 0 0 auto;
+  gap: 5px;
+  padding-inline: 10px;
+  white-space: nowrap;
+}
+
+.game-shell .mode-card svg {
+  display: block;
+  flex: none;
+  width: 14px;
+  height: 14px;
+}
+
+.game-shell .lobby-start,
+.game-shell:not(.has-action-dock) .lobby-start {
+  max-width: 100%;
+  padding: 8px 22px;
+  color: #17362a;
+  border: 1px solid #f1d390;
+  border-radius: 999px;
+  background: linear-gradient(115deg, #c99b4c, #f3dc9d 48%, #c99a4b);
+  box-shadow: 0 4px 16px rgba(194, 147, 63, 0.2), inset 0 1px rgba(255, 255, 255, 0.48);
+  font-size: 0.9rem;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.game-shell .action-card .primary-button {
+  max-width: 100%;
+  padding: 8px 18px;
+  color: #f7e5b7;
+  border: 1px solid #c9a35a;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #245448, #16382f);
+  box-shadow: 0 4px 16px rgba(7, 18, 12, 0.32), inset 0 1px rgba(255, 224, 161, 0.15);
+  font-size: 0.9rem;
+  letter-spacing: 0.02em;
+  white-space: normal;
+}
+
+.game-shell .action-card .primary-button:hover:not(:disabled) {
+  background: linear-gradient(135deg, #306958, #1d4638);
+}
+
+.game-shell .online-room-panel {
+  width: min(100%, 25rem);
+  align-self: center;
+  gap: 4px;
+}
+
+.game-shell .online-room-panel .secondary-button {
+  min-height: 44px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.game-shell .online-room-panel > .secondary-button {
+  align-self: center;
+}
+
+.game-shell .join-room-row {
+  display: flex;
+  width: 100%;
+  align-items: center;
+}
+
+.game-shell .join-room-row .text-input {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 44px;
+}
+
+.game-shell .join-room-row .secondary-button {
+  flex: 0 1 auto;
+  max-width: 70%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.leaderboard-backdrop {
+  position: fixed;
+  z-index: 50;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: max(16px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+  background: rgba(3, 10, 8, 0.66);
+  backdrop-filter: blur(6px);
+}
+
+.game-shell .scoreboard-panel {
+  position: relative;
+  inset: auto;
+  width: min(100%, 480px);
+  max-height: min(82dvh, 640px);
+  padding: 20px;
+  overflow-y: auto;
+  color: #f0e5d0;
+  border: 1px solid rgba(231, 200, 135, 0.35);
+  border-radius: 20px;
+  background: linear-gradient(145deg, rgba(38, 55, 44, 0.97), rgba(15, 28, 22, 0.98));
+  box-shadow: 0 25px 70px rgba(0, 0, 0, 0.45), inset 0 1px rgba(255, 255, 255, 0.07);
+}
+
+.leaderboard-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(228, 213, 181, 0.15);
+}
+
+.leaderboard-heading h2 {
+  margin: 2px 0 0;
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 500;
+}
+
+.leaderboard-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #d9b977;
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+}
+
+.leaderboard-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.leaderboard-row {
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 8px;
+  min-height: 60px;
+  padding: 7px 0;
+  border-bottom: 1px solid rgba(228, 213, 181, 0.1);
+}
+
+.leaderboard-row:last-child {
+  border-bottom: 0;
+}
+
+.leaderboard-rank {
+  min-width: 25px;
+  color: #d8b970;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.leaderboard-rank,
+.leaderboard-points b {
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+
+.leaderboard-row .row-details {
+  overflow: hidden;
+}
+
+.leaderboard-row .row-details b,
+.leaderboard-row .row-details small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.leaderboard-points {
+  display: flex;
+  min-width: 50px;
+  flex-direction: column;
+  align-items: flex-end;
+  font-variant-numeric: tabular-nums;
+}
+
+.leaderboard-points small {
+  color: #a7b0a1;
+  font-size: 0.75rem;
+}
+
+.leaderboard-points b {
+  color: #e4d7ba;
+  font-size: 0.9rem;
+}
+
+.leaderboard-points.total b {
+  color: #f0d28b;
+}
+
+.final-leaderboard {
+  margin: 2px 4px;
+  border-radius: 999px;
+}
+
+.font-scale-options {
+  grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+}
+
+.font-scale-hint {
+  color: #a7b0a1;
+  font-size: 0.8rem;
+}
+
+@media (max-width: 600px) {
+  .game-shell.lobby-mode-online .online-notice {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+
+  .game-shell .topbar-round strong,
+  .game-shell .topbar-round b {
+    font-size: clamp(0.7rem, 3.2vw, 0.8rem);
+  }
+
+  .leaderboard-backdrop {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .game-shell .scoreboard-panel {
+    width: 100%;
+    padding: 16px 14px max(16px, env(safe-area-inset-bottom));
+    border-radius: 20px 20px 0 0;
+  }
+}
+
+.game-shell .topbar {
+  flex-basis: 44px;
+  height: 44px;
+  gap: 4px;
+}
+
+.game-shell .header-actions {
+  gap: 0;
+}
+
+.game-shell .header-actions .icon-button {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  min-height: 40px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.game-shell .header-actions .icon-button::before {
+  position: absolute;
+  inset: 4px;
+  content: '';
+  border: 1px solid rgba(222, 194, 137, 0.35);
+  border-radius: 50%;
+}
+
+.game-shell .header-actions .icon-button:hover::before,
+.game-shell .header-actions .icon-button.selected::before {
+  border-color: #e8c66f;
+  background: rgba(232, 198, 111, 0.1);
+}
+
+.game-shell .header-actions .icon-button svg {
+  position: relative;
+  width: 14px;
+  height: 14px;
+}
+
+.settings-modal {
+  width: min(100%, 42rem);
+  max-height: 85dvh;
+  overflow: hidden;
+}
+
+.settings-modal .modal-heading,
+.settings-modal .modal-footer {
+  position: relative;
+  z-index: 1;
+  flex: 0 0 auto;
+  background: rgba(28, 39, 32, 0.98);
+}
+
+.settings-modal .settings-content {
+  display: flex;
+  min-height: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 1em;
+  padding: 1em 1em 1.5em;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.settings-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.625em;
+}
+
+.settings-grid .setting-choice,
+.settings-modal .setting-choice,
+.settings-modal .player-count-option,
+.game-shell .guess-option {
+  min-width: 0;
+  min-height: max(44px, 2.25em);
+  height: auto;
+  gap: 0.4em;
+  padding: 0.45em 0.9em;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.settings-grid .setting-choice svg {
+  flex: none;
+}
+
+.game-shell .mode-card,
+.game-shell:not(.has-action-dock) .mode-card {
+  min-height: max(44px, 2.25em);
+  max-width: 100%;
+  flex: 0 1 auto;
+  padding: 0.45em 0.9em;
+  line-height: 1.3;
+  white-space: normal;
+}
+
+.game-shell .mode-tabs,
+.game-shell:not(.has-action-dock) .mode-tabs {
+  justify-content: center;
+  flex-wrap: wrap;
+  overflow: visible;
+}
+
+.game-shell .lobby-start,
+.game-shell .action-card .primary-button,
+.game-shell .online-room-panel .secondary-button {
+  min-height: max(44px, 2.25em);
+  height: auto;
+  padding: 0.45em 0.9em;
+  line-height: 1.3;
+}
+
+.settings-modal .text-input,
+.game-shell .text-input {
+  min-width: 0;
+  min-height: max(44px, 2.25em);
+  height: auto;
+  padding: 0.45em 0.9em;
+  line-height: 1.3;
+}
+
+@media (min-width: 640px) {
+  .settings-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (orientation: landscape) and (max-height: 519px) {
+  .game-shell.lobby-mode-local:not(.has-action-dock) .arena-card,
+  .game-shell.lobby-mode-online:not(.has-action-dock) .arena-card {
+    flex: 0 0 65dvh;
+    height: 65dvh;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 519px) {
+  .game-shell {
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+    scroll-behavior: smooth;
+  }
+
+  .game-shell .game-layout,
+  .game-shell:not(.has-action-dock) .game-layout,
+  .game-shell.has-action-dock .game-layout {
+    flex: 0 0 auto;
+    min-height: calc(100dvh - 44px);
+  }
+
+  .game-shell .arena-card,
+  .game-shell:not(.has-action-dock) .arena-card {
+    flex: 0 0 55dvh;
+    height: 55dvh;
+  }
+
+  .game-shell .side-panel,
+  .game-shell:not(.has-action-dock) .side-panel,
+  .game-shell.has-action-dock .side-panel,
+  .game-shell.has-action-dock.mobile-scoreboard-open .side-panel {
+    max-height: none;
+  }
+
+  .game-shell .action-message,
+  .game-shell.has-action-dock .action-message {
+    max-height: none;
+    overflow: visible;
+  }
+
+  .settings-modal {
+    max-height: 88dvh;
+  }
+
+  .settings-modal .modal-heading,
+  .settings-modal .modal-footer {
+    padding: 0.4em 0.8em;
+  }
+
+  .settings-modal .modal-heading .eyebrow {
+    display: none;
+  }
+
+  .settings-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.settings-selects {
+  display: grid;
+  gap: 0.6em;
+}
+
+.settings-select,
+.settings-select details {
+  min-width: 0;
+}
+
+.settings-select summary,
+.settings-accordion h3 button {
+  display: flex;
+  align-items: center;
+  gap: 0.6em;
+  width: 100%;
+  min-height: 44px;
+  padding: 0.55em 0.85em;
+  border: 1px solid rgba(218, 183, 105, 0.4);
+  border-radius: 0.8em;
+  background: rgba(15, 47, 37, 0.8);
+  color: #f5e8c7;
+  text-align: start;
+  cursor: pointer;
+  list-style: none;
+}
+
+.settings-select summary::-webkit-details-marker {
+  display: none;
+}
+
+.settings-select summary span,
+.settings-select-options button span {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.settings-select summary svg,
+.settings-select-options svg {
+  flex: none;
+}
+
+.settings-select-menu {
+  padding: 0.55em;
+  border: 1px solid rgba(218, 183, 105, 0.35);
+  border-radius: 0 0 0.8em 0.8em;
+  background: #19382d;
+}
+
+.settings-select-options {
+  max-height: 12rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.settings-select-options button {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 44px;
+  gap: 0.6em;
+  padding: 0.5em 0.75em;
+  border: 0;
+  border-radius: 0.5em;
+  background: transparent;
+  color: #f5e8c7;
+  text-align: start;
+  cursor: pointer;
+}
+
+.settings-select-options button:hover,
+.settings-select-options button[aria-pressed="true"] {
+  background: rgba(218, 183, 105, 0.17);
+}
+
+.select-swatch {
+  width: 1em;
+  height: 1em;
+  flex: none;
+  border: 1px solid #d5b16b;
+  border-radius: 50%;
+}
+
+.select-empty {
+  padding: 0.6em;
+}
+
+.settings-accordion h3 {
+  margin: 0;
+}
+
+.settings-accordion h3 button {
+  justify-content: space-between;
+  font: inherit;
+}
+
+.accordion-chevron {
+  flex: none;
+  transition: transform 0.2s ease;
+}
+
+.accordion-chevron.open {
+  transform: rotate(180deg);
+}
+
+.accordion-panel {
+  overflow: hidden;
+}
+
+.accordion-panel .setting-section {
+  padding: 0.8em 0.25em 0.3em;
+}
+
+.settings-select summary:focus-visible,
+.settings-select-options button:focus-visible,
+.settings-accordion button:focus-visible {
+  outline: 2px solid #f0d182;
+  outline-offset: 2px;
+}
+
+@media (min-width: 640px) {
+  .settings-selects {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+  }
+}
+
+.game-shell:not(.has-action-dock) .side-panel {
+  padding-inline: 54px;
+}
+
+.lobby-controls {
+  display: flex;
+  width: 100%;
+  max-width: 32rem;
+  align-items: stretch;
+  justify-content: center;
+  gap: 5px;
+}
+
+.mode-picker {
+  min-width: 0;
+}
+
+.lobby-controls .mode-picker {
+  flex: 1 1 55%;
+}
+
+.game-shell .lobby-controls .lobby-start {
+  flex: 1 1 45%;
+  min-width: 0;
+  padding: 0.45em 0.7em;
+  line-height: 1.15;
+  font-size: 0.8rem;
+  white-space: normal;
+}
+
+.mode-picker-trigger,
+.mode-picker-menu button {
+  display: flex;
+  width: 100%;
+  min-height: 44px;
+  align-items: center;
+  gap: 0.4em;
+  padding: 0.45em 0.7em;
+  color: #f2e4c4;
+  border: 1px solid rgba(218, 183, 105, 0.5);
+  border-radius: 999px;
+  background: #19382d;
+  text-align: start;
+  cursor: pointer;
+}
+
+.lobby-controls .mode-picker-trigger {
+  height: 100%;
+  gap: 0.2em;
+  padding-inline: 0.5em;
+  font-size: 0.8rem;
+}
+
+.lobby-controls .mode-picker-trigger span {
+  overflow: visible;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+.lobby-controls .lobby-start svg {
+  display: none;
+}
+
+.lobby-controls .mode-picker-trigger svg {
+  width: 14px;
+  height: 14px;
+}
+
+.mode-picker-trigger span,
+.mode-picker-menu button span {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mode-picker-trigger svg,
+.mode-picker-menu svg {
+  flex: none;
+}
+
+.mode-picker-trigger:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.mode-picker-menu {
+  padding: 0.35em;
+  border: 1px solid rgba(218, 183, 105, 0.45);
+  border-radius: 0.8em;
+  background: #19382d;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.38);
+}
+
+.mode-picker-menu.is-popover {
+  position: fixed;
+  z-index: 60;
+}
+
+.mode-picker-menu button {
+  border: 0;
+  border-radius: 0.5em;
+  background: transparent;
+}
+
+.mode-picker-menu button:hover,
+.mode-picker-menu button[aria-checked="true"] {
+  background: rgba(218, 183, 105, 0.16);
+}
+
+.mode-picker-trigger:focus-visible,
+.mode-picker-menu button:focus-visible {
+  outline: 2px solid #f0d182;
+  outline-offset: 2px;
+}
+
+.seat-avatar:has(.role-icon),
+.row-avatar:has(.role-icon) {
+  color: #e8c66f;
+  border: 1px solid var(--seat-color);
+  background: #18342a;
+}
+
+.role-icon {
+  display: block;
+  flex: none;
+}
+
+.role-icon-hidden {
+  color: #dbd3bc;
+  animation: hidden-seal-pulse 2.4s ease-in-out infinite alternate;
+}
+
+@keyframes hidden-seal-pulse {
+  to { opacity: 0.6; }
+}
+
+.chat-unread-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.chat-message-meta strong {
+  min-width: 0;
+}
+
+.investigation-clock {
+  width: 80px;
+  min-width: 80px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .role-icon-hidden { animation: none; }
+}
+
+.variant-top .player-count-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.settings-modal .variant-top .player-count-option {
+  justify-content: center;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  text-align: center;
+}
+
+.game-shell .side-panel,
+.game-shell:not(.has-action-dock) .side-panel {
+  padding-inline: 56px 10px;
+}
+
+.lobby-controls {
+  gap: 8px;
+}
+
+.game-shell .arena,
+.game-shell:not(.has-action-dock) .arena {
+  overflow: hidden;
+  border: 1px solid rgba(218, 183, 105, 0.25);
+  border-radius: 16px;
+}
+
+.chat-reactions {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  padding: 3px 0;
+  scrollbar-width: thin;
+}
+
+.chat-reactions button {
+  min-width: 44px;
+  min-height: 44px;
+  flex: none;
+  border: 0;
+  border-radius: 8px;
+  background: rgba(218, 183, 105, 0.08);
+  cursor: pointer;
+  font-size: 1.1rem;
+}
+
+.chat-toast {
+  overflow: hidden;
+  color: #e7d8b8;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chat-toast-slot {
+  height: 1.4em;
+  flex: none;
+  overflow: hidden;
+  text-align: center;
+}
+
+.game-shell.chat-open .arena-card {
+  flex-direction: column;
+}
+
+.chat-action-strip {
+  flex: 0 0 auto;
+  max-height: 25dvh;
+  overflow-y: auto;
+  padding: 4px 8px;
+  text-align: center;
+  background: rgba(18, 30, 24, 0.96);
+}
+
+.chat-action-strip .action-card {
+  min-height: 0;
+  margin: 0;
+  padding: 3px;
+}
+
+.chat-action-strip .action-card h3 {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.game-shell.chat-open .side-panel {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  max-height: none;
+  padding: 0;
+}
+
+.game-shell.chat-open .chat-drawer {
+  position: static;
+  order: 1;
+}
+
+.game-shell.chat-open .chat-panel {
+  position: relative;
+  inset: auto;
+  width: 100%;
+  height: min(46dvh, 360px);
+  min-height: 0;
+  max-height: 46dvh;
+  padding-bottom: env(safe-area-inset-bottom);
+  border-radius: 16px 16px 0 0;
+}
+
+@media (max-width: 639px) {
+  .game-shell.chat-open.lobby-mode-local .chat-panel,
+  .game-shell.chat-open.lobby-mode-online .chat-panel {
+    height: min(35dvh, 280px);
+  }
+}
+
+.game-shell.chat-open .chat-toggle {
+  display: none;
+}
+
+.game-shell.chat-open .action-message {
+  order: 0;
+}
+
+@media (min-width: 640px) {
+  .game-shell.chat-open .game-layout {
+    flex-direction: row;
+  }
+
+  .game-shell.chat-open .arena-card {
+    width: auto;
+    height: auto;
+    flex: 1 1 0;
+  }
+
+  .game-shell.chat-open .side-panel {
+    width: min(320px, 42vw);
+    flex: 0 0 min(320px, 42vw);
+  }
+
+  .game-shell.chat-open .chat-panel {
+    height: min(70dvh, 600px);
+    max-height: 70dvh;
+    border-radius: 16px;
+  }
+}
+
+@media (orientation: landscape) and (min-width: 640px) and (max-height: 519px) {
+  .settings-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 901px) and (min-height: 520px) {
+  .game-shell .local-player-fields {
+    width: min(100%, 900px);
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .game-shell .local-player-fields:has(.field-with-seat:nth-child(5)) {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+
+.game-shell .local-player-fields,
+.game-shell .local-player-fields:has(.field-with-seat:nth-child(5)) {
+  display: flex;
+  width: 100%;
+  max-width: 100%;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 1px;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.game-shell .field-with-seat {
+  display: flex;
+  min-width: 0;
+  flex: 0 0 142px;
+  align-items: center;
+  gap: 4px;
+}
+
+.game-shell .field-with-seat > span {
+  display: grid;
+  width: 24px;
+  height: 24px;
+  flex: none;
+  place-items: center;
+  border: 1px solid rgba(218, 183, 105, 0.6);
+  border-radius: 50%;
+  color: #ead29a;
+}
+
+.game-shell .field-with-seat .text-input {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  padding: 0.35em 0.65em;
+  border-radius: 999px;
+  font-size: 0.8rem;
+}
+
+.game-shell.chat-open .game-layout {
+  flex-direction: column;
+}
+
+.game-shell.chat-open .arena-card {
+  width: auto;
+  height: auto;
+  flex: 1 1 0;
+}
+
+.game-shell.chat-open .side-panel {
+  display: block;
+  width: auto;
+  flex: 0 0 auto;
+  padding-inline: 56px 10px;
+}
+
+.game-shell.chat-open .chat-drawer {
+  position: absolute;
+  z-index: 40;
+}
+
+.game-shell.chat-open .chat-panel {
+  position: fixed;
+  z-index: 40;
+  inset: auto 8px max(8px, env(safe-area-inset-bottom)) 8px;
+  width: auto;
+  height: min(46dvh, 360px);
+  max-height: 46dvh;
+  border: 1px solid rgba(218, 183, 105, 0.35);
+  border-radius: 16px;
+  background: rgba(13, 22, 18, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.chat-action-strip {
+  position: absolute;
+  z-index: 30;
+  top: 8px;
+  left: 50%;
+  width: min(90%, 420px);
+  max-height: min(25dvh, 180px);
+  padding: 4px 8px;
+  transform: translateX(-50%);
+  border: 1px solid rgba(218, 183, 105, 0.38);
+  border-radius: 16px;
+  background: rgba(13, 22, 18, 0.82);
+}
+
+.chat-action-strip.below-clock {
+  top: 50px;
+}
+
+.chat-action-strip .action-card h3 {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chat-action-strip .action-card:not(.guess-card):not(.result-card) {
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.chat-action-strip .action-card h3 {
+  min-width: 0;
+}
+
+.chat-action-strip .action-card .thinking-dots {
+  flex: none;
+}
+
+.modal-backdrop,
+.leaderboard-backdrop {
+  z-index: 50;
+}
+
+.privacy-curtain {
+  z-index: 60;
+}
+
+.mode-picker-menu.is-popover {
+  z-index: 30;
+}
+
+.modal-backdrop,
+.leaderboard-backdrop {
+  padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+}
+
+.settings-modal,
+.guide-modal,
+.game-shell .scoreboard-panel {
+  width: min(32rem, calc(100vw - 24px));
+  max-height: 84dvh;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.guide-modal,
+.game-shell .scoreboard-panel {
+  display: flex;
+  flex-direction: column;
+}
+
+.guide-modal .modal-heading,
+.guide-intro,
+.guide-modal > .modal-done,
+.leaderboard-heading {
+  flex: none;
+}
+
+.guide-steps,
+.leaderboard-list {
+  min-height: 0;
+  max-height: none;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+@media (min-width: 640px) {
+  .game-shell.chat-open .chat-panel {
+    inset: auto max(8px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) auto;
+    width: min(320px, 42vw);
+    height: min(46dvh, 360px);
+    max-height: 46dvh;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 519px) {
+  .game-shell.chat-open .chat-panel {
+    height: min(80dvh, 320px);
+    max-height: 80dvh;
+  }
+
+  .game-shell.chat-open .chat-action-strip {
+    left: 8px;
+    width: calc(100% - min(320px, 42vw) - 24px);
+    transform: none;
+  }
+}
+
+.game-shell .topbar {
+  border-bottom: 0;
+}
+
+.game-shell .arena-card,
+.game-shell:not(.has-action-dock) .arena-card {
+  border: 0;
+  background: transparent;
+}
+
+.game-shell .chat-action-strip .result-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  flex: none;
+  justify-content: flex-start;
+  gap: 4px;
+}
+
+.chat-action-strip .result-card h3 {
+  grid-column: 1 / -1;
+}
+
+.game-shell .chat-action-strip .result-card .primary-button {
+  margin: 0;
+  white-space: nowrap;
+}
+
+.compact-round-scores {
+  max-width: 100%;
+  color: #d7c7a6;
+  font-size: 0.8rem;
+}
+
+.compact-round-scores summary {
+  min-height: 44px;
+  padding: 6px;
+  cursor: pointer;
+}
+
+.game-shell .chat-panel .chat-header {
+  min-height: 44px;
+  padding: 0 8px;
+}
+
+.game-shell .chat-panel .chat-title,
+.game-shell .chat-panel .chat-title strong {
+  font-size: 0.85rem;
+}
+
+.game-shell .chat-panel .chat-icon-button {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
+  border: 0;
+  background: transparent;
+}
+
+.game-shell .chat-panel .chat-icon-button::before {
+  position: absolute;
+  width: 30px;
+  height: 30px;
+  border: 1px solid rgba(228, 213, 181, 0.2);
+  border-radius: 50%;
+  content: '';
+}
+
+.game-shell .chat-panel .chat-messages {
+  gap: 5px;
+  padding: 6px 8px;
+}
+
+.game-shell .chat-panel .chat-message-body {
+  padding: 4px 6px;
+}
+
+.game-shell .chat-panel .chat-message-body p,
+.game-shell .chat-panel .chat-message-meta strong,
+.game-shell .chat-panel .chat-message-meta time,
+.game-shell .chat-panel .chat-quick-label {
+  font-size: 0.8rem;
+  line-height: 1.3;
+}
+
+.game-shell .chat-panel .chat-composer {
+  padding: 4px 8px 8px;
+}
+
+.game-shell .chat-panel .chat-quick-label {
+  margin: 0;
+}
+
+.game-shell .chat-panel .chat-quick-chips,
+.game-shell .chat-panel .chat-reactions {
+  gap: 2px;
+  padding: 0;
+}
+
+.game-shell .chat-panel .chat-quick-chips button,
+.game-shell .chat-panel .chat-reactions button {
+  display: grid;
+  min-height: 44px;
+  place-items: center;
+  padding: 0 2px;
+  border: 0;
+  background: transparent;
+}
+
+.game-shell .chat-panel .chat-quick-chips button span,
+.game-shell .chat-panel .chat-reactions button span {
+  display: grid;
+  min-height: 30px;
+  place-items: center;
+  padding: 0.3em 0.6em;
+  border: 1px solid rgba(214, 183, 119, 0.22);
+  border-radius: 999px;
+  background: rgba(214, 183, 119, 0.06);
+  font-size: 0.8rem;
+  line-height: 1.25;
+}
+
+.game-shell .chat-panel .chat-reactions button span {
+  min-width: 30px;
+  padding: 0;
+  border-radius: 8px;
+  font-size: 1rem;
+}
+
+.game-shell .chat-panel .chat-quick-strip {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 4px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: thin;
+}
+
+.game-shell .chat-panel .chat-quick-strip .chat-reactions,
+.game-shell .chat-panel .chat-quick-strip .chat-quick-chips {
+  flex: none;
+  overflow: visible;
+}
+
+.player-seat .seat-avatar {
+  display: grid;
+  width: clamp(20px, 1.35rem, 26px);
+  height: clamp(20px, 1.35rem, 26px);
+  flex: none;
+  place-items: center;
+  line-height: 1;
+}
+
+.seat-avatar .role-icon,
+.row-avatar .role-icon {
+  width: 70%;
+  height: 70%;
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.player-seat .seat-label-group {
+  min-width: 0;
+  flex: 1 1 auto;
+  align-items: flex-start;
+}
+
+.player-seat .seat-name,
+.player-seat .seat-role {
+  display: block;
+  max-width: 100%;
+}
+
+@media (orientation: landscape) and (max-height: 519px) {
+  .player-seat {
+    max-width: 110px;
   }
 }

@@ -1,12 +1,7 @@
 import { useState } from 'react'
-import { Bot, Copy, Crown, Link, Users, Wifi } from 'lucide-react'
+import { Bot, Copy, Crown, Link } from 'lucide-react'
 import { translate } from '../i18n/translations.js'
-
-const MODES = [
-  { id: 'solo', icon: Crown },
-  { id: 'local', icon: Users },
-  { id: 'online', icon: Wifi },
-]
+import ModeSelector from './ModeSelector.jsx'
 
 export default function LobbyPanel({
   settings,
@@ -44,22 +39,6 @@ export default function LobbyPanel({
   return (
     <div className="lobby-setup">
       <p className="eyebrow">{t('selectMode')}</p>
-      <div className="mode-tabs">
-        {MODES.map(({ id, icon: Icon }) => (
-          <button
-            type="button"
-            className={`mode-card${settings.mode === id ? ' selected' : ''}`}
-            key={id}
-            onClick={() => updateSetting('mode', id)}
-            aria-pressed={settings.mode === id}
-            title={t(id)}
-          >
-            <Icon size={16} />
-            <span>{t(id)}</span>
-          </button>
-        ))}
-      </div>
-
       {settings.mode === 'solo' && (
         <div className="mode-description">
           <span className="mode-icon"><Bot size={17} /></span>
@@ -68,7 +47,7 @@ export default function LobbyPanel({
       )}
 
       {settings.mode === 'local' && (
-        <div className="local-player-fields">
+        <div className="local-player-fields" role="group" aria-label={t('players')}>
           {Array.from({ length: playerCount }, (_, index) => settings.localNames[index] ?? `Player ${index + 1}`).map((name, index) => (
             <label key={index} className="field-with-seat">
               <span>{index + 1}</span>
@@ -81,7 +60,6 @@ export default function LobbyPanel({
               />
             </label>
           ))}
-          <p className="privacy-caption">{t('privacy')}</p>
         </div>
       )}
 
@@ -128,17 +106,13 @@ export default function LobbyPanel({
         </div>
       )}
 
-      {settings.mode !== 'online' && (
-        <button className="primary-button lobby-start" type="button" onClick={onStart}>
-          {t('gather')} <Crown size={15} />
-        </button>
-      )}
-      {settings.mode === 'online' && canStartOnline && (
-        <button className="primary-button lobby-start" type="button" onClick={onStart}>
-          {t('gather')} <Crown size={15} />
-        </button>
-      )}
       {isRemoteClient && <p className="privacy-caption">{t('hostWillStart')}</p>}
+      <div className="lobby-controls">
+        <ModeSelector mode={settings.mode} language={settings.language} onChange={(mode) => updateSetting('mode', mode)} popover />
+        {(settings.mode !== 'online' || canStartOnline) && (
+          <button className="primary-button lobby-start" type="button" onClick={onStart}>{t('gather')} <Crown size={15} /></button>
+        )}
+      </div>
     </div>
   )
 }

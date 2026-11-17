@@ -1,19 +1,21 @@
 import { useEffect, useRef, useState } from 'react'
-import { MessageCircle, Send, Volume2, VolumeX, X } from 'lucide-react'
+import { MessageCircle, Send, X } from 'lucide-react'
 import { getChatCopy } from '../i18n/chatTranslations.js'
 import { getDirection, translate } from '../i18n/translations.js'
 import { filterChatText } from '../chat/chatUtils.js'
+
+const REACTIONS = ['👑', '🕵️', '😈', '😂', '👏', '🤔', '😱', '🔥']
 
 export default function ChatDrawer({
   messages,
   currentPlayerId,
   language,
-  muted,
-  onToggleMute,
   onSend,
   botTyping,
+  open,
+  onOpenChange,
+  onReaction,
 }) {
-  const [open, setOpen] = useState(false)
   const [draft, setDraft] = useState('')
   const [unread, setUnread] = useState(0)
   const [cooldownLeft, setCooldownLeft] = useState(0)
@@ -31,12 +33,12 @@ export default function ChatDrawer({
       setUnread(0)
       return
     }
-    if (!muted && latestMessageId && latestMessageId !== lastSeenMessageId.current) {
+    if (latestMessageId && latestMessageId !== lastSeenMessageId.current) {
       const previousIndex = messages.findIndex(({ id }) => id === lastSeenMessageId.current)
       setUnread((count) => count + (previousIndex < 0 ? 1 : messages.length - previousIndex - 1))
     }
     lastSeenMessageId.current = latestMessageId
-  }, [messages, muted, open])
+  }, [messages, open])
 
   useEffect(() => {
     if (messageList.current) messageList.current.scrollTop = messageList.current.scrollHeight
@@ -62,26 +64,16 @@ export default function ChatDrawer({
   }
 
   return (
-    <div className={`chat-drawer${open ? ' is-open' : ''}${unread && !muted ? ' has-unread' : ''}`} dir={direction}>
+    <div className={`chat-drawer${open ? ' is-open' : ''}${unread ? ' has-unread' : ''}`} dir={direction}>
       {open && (
         <section className="chat-panel" aria-label={copy.title}>
           <header className="chat-header">
             <div className="chat-title">
               <MessageCircle size={16} />
               <strong>{copy.title}</strong>
-              {muted && <span className="chat-muted-status">{copy.muted}</span>}
             </div>
             <div className="chat-header-actions">
-              <button
-                type="button"
-                className="chat-icon-button"
-                aria-label={muted ? copy.unmute : copy.mute}
-                title={muted ? copy.unmute : copy.mute}
-                onClick={onToggleMute}
-              >
-                {muted ? <VolumeX size={15} /> : <Volume2 size={15} />}
-              </button>
-              <button type="button" className="chat-icon-button" aria-label={closeLabel} onClick={() => setOpen(false)}>
+              <button type="button" className="chat-icon-button" aria-label={closeLabel} onClick={() => onOpenChange(false)}>
                 <X size={15} />
               </button>
             </div>
@@ -113,12 +105,18 @@ export default function ChatDrawer({
 
           <div className="chat-composer">
             <p className="chat-quick-label">{copy.quickTitle}</p>
-            <div className="chat-quick-chips" aria-label={copy.quickTitle}>
-              {copy.quick.map((text) => (
-                <button key={text} type="button" onClick={() => sendMessage(text)} disabled={cooldownLeft > 0}>
-                  {text}
-                </button>
-              ))}
+            <div className="chat-quick-strip">
+              <div className="chat-quick-chips" role="group" aria-label={copy.quickTitle}>
+                {copy.quick.map((text) => (
+                  <button key={text} type="button" onClick={() => sendMessage(text)} disabled={cooldownLeft > 0}>
+                    <span>{text}</span>
+                  </button>
+                ))}
+              </div>
+              <div className="chat-reactions" role="group" aria-label="Quick reactions">
+                {REACTIONS.map((reaction) => <button key={reaction} type="button" aria-label={`Send reaction ${reaction}`} disabled={cooldownLeft > 0}
+                  onClick={() => { sendMessage(reaction); onReaction(reaction) }}><span>{reaction}</span></button>)}
+              </div>
             </div>
             <form
               className="chat-input-row"
@@ -147,10 +145,10 @@ export default function ChatDrawer({
         className="chat-toggle"
         aria-label={open ? closeLabel : copy.title}
         aria-expanded={open}
-        onClick={() => setOpen((value) => !value)}
+        onClick={() => onOpenChange(!open)}
       >
         <MessageCircle size={19} />
-        {unread > 0 && !muted && <span className="chat-unread-badge">{unread > 99 ? '99+' : unread}</span>}
+        {unread > 0 && <span className="chat-unread-badge">{unread > 99 ? '99+' : unread}</span>}
       </button>
     </div>
   )

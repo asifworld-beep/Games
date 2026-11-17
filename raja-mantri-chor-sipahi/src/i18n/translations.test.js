@@ -32,8 +32,17 @@ test('all languages describe Sipahi investigating the hidden Mantri and Chor', (
 test('localizes core lobby, privacy, and accessibility text in every language', () => {
   for (const { id } of LANGUAGES) {
     if (id === 'en') continue
-    for (const key of ['soloDescription', 'privacy', 'mute', 'unmute', 'preparing', 'privateChitReady', 'tapToPeek']) {
+    for (const key of ['soloDescription', 'privacy', 'mute', 'unmute', 'preparing', 'privateChitReady', 'tapToPeek', 'arrestSuspect', 'memorizing']) {
       assert.notEqual(translate(id, key), translate('en', key), `${id} should translate ${key}`)
+    }
+  }
+})
+
+test('all supported languages have labels for the five courtyard themes', () => {
+  for (const { id } of LANGUAGES) {
+    for (const key of ['dawn', 'himalayan', 'emerald', 'sandstone', 'sapphire']) {
+      assert.notEqual(translate(id, key), key, `${id} is missing ${key}`)
+      if (id !== 'en' && id !== 'hinglish') assert.notEqual(translate(id, key), translate('en', key))
     }
   }
 })
