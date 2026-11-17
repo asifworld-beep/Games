@@ -24,9 +24,10 @@ export default function LobbyPanel({
   const [roomCodeInput, setRoomCodeInput] = useState('')
   const [copied, setCopied] = useState(false)
   const t = (key) => translate(settings.language, key)
-  const setName = (index, value) => updateSetting('localNames', settings.localNames.map(
-    (name, current) => current === index ? value : name,
-  ))
+  const setName = (index, value) => updateSetting('localNames', Array.from({ length: 5 }, (_, current) => (
+    current === index ? value : settings.localNames[current] ?? `Player ${current + 1}`
+  )))
+  const playerCount = settings.playerCount === 5 ? 5 : 4
 
   const copyRoomLink = async () => {
     const url = new URL(window.location.href)
@@ -66,7 +67,7 @@ export default function LobbyPanel({
 
       {settings.mode === 'local' && (
         <div className="local-player-fields">
-          {settings.localNames.map((name, index) => (
+          {Array.from({ length: playerCount }, (_, index) => settings.localNames[index] ?? `Player ${index + 1}`).map((name, index) => (
             <label key={index} className="field-with-seat">
               <span>{index + 1}</span>
               <input
@@ -109,11 +110,11 @@ export default function LobbyPanel({
                 {roomInfo.players.map((player) => (
                   <span key={player.id} className="room-player"><i />{player.name}{player.id === roomInfo.roomCode && <small>{t('host')}</small>}</span>
                 ))}
-                {Array.from({ length: Math.max(0, 4 - roomInfo.players.length) }, (_, index) => (
+                {Array.from({ length: Math.max(0, playerCount - roomInfo.players.length) }, (_, index) => (
                   <span key={`empty-${index}`} className="room-player empty"><i />{t('waiting')}</span>
                 ))}
               </div>
-              {roomInfo.isHost && roomInfo.players.length < 4 && (
+              {roomInfo.isHost && roomInfo.players.length < playerCount && (
                 <button className="quiet-button fill-bots-button" type="button" onClick={onFillBots}><Bot size={14} /> {t('fillBots')}</button>
               )}
             </div>

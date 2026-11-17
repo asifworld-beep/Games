@@ -3,10 +3,21 @@ export const PLAYER_DEFS = [
   { id: 'mira', name: 'Mira', initials: 'M', color: '#d78162', seat: 'west', human: false },
   { id: 'kabir', name: 'Kabir', initials: 'K', color: '#739b88', seat: 'north', human: false },
   { id: 'asha', name: 'Asha', initials: 'A', color: '#8b81bc', seat: 'east', human: false },
+  { id: 'neel', name: 'Neel', initials: 'N', color: '#d5a566', seat: 'southwest', human: false },
 ]
+const PLAYER_SEAT_LAYOUTS = {
+  4: ['south', 'west', 'north', 'east'],
+  5: ['north', 'northeast', 'southeast', 'southwest', 'northwest'],
+}
+const DEFAULT_PLAYER_DEFS = PLAYER_DEFS.slice(0, 4)
+
+export function getPlayerSeat(index, playerCount) {
+  return PLAYER_SEAT_LAYOUTS[playerCount]?.[index] ?? PLAYER_DEFS[index]?.seat ?? 'south'
+}
 
 export const ROLE = {
   RAJA: 'raja',
+  RANI: 'rani',
   MANTRI: 'mantri',
   CHOR: 'chor',
   SIPAHI: 'sipahi',
@@ -14,20 +25,32 @@ export const ROLE = {
 
 export const ROLE_INFO = {
   [ROLE.RAJA]: { name: 'Raja', points: 1000 },
+  [ROLE.RANI]: { name: 'Rani', points: 900 },
   [ROLE.MANTRI]: { name: 'Mantri', points: 800 },
-  [ROLE.CHOR]: { name: 'Chor', points: 800 },
+  [ROLE.CHOR]: { name: 'Chor', points: 0 },
   [ROLE.SIPAHI]: { name: 'Sipahi', points: 500 },
 }
 
-const ROLE_IDS = Object.values(ROLE)
+export const INVESTIGATOR_ROLE = 'SIPAHI'
+export const SUSPECT_ROLES = ['MANTRI', 'CHOR']
+const FOUR_PLAYER_ROLES = [ROLE.RAJA, ROLE.MANTRI, ROLE.CHOR, ROLE.SIPAHI]
+const FIVE_PLAYER_ROLES = [ROLE.RAJA, ROLE.RANI, ROLE.MANTRI, ROLE.CHOR, ROLE.SIPAHI]
 
-export function createGame(playerDefs = PLAYER_DEFS, options = {}) {
+export function createGame(playerDefs = DEFAULT_PLAYER_DEFS, options = {}) {
   return {
     phase: 'lobby',
     roundNumber: 0,
     roundLimit: options.roundLimit ?? 10,
     mode: options.mode ?? 'solo',
-    players: playerDefs.map((player) => ({ ...player, score: 0 })),
+    players: playerDefs.map((player, index) => ({
+      ...player,
+      seat: getPlayerSeat(index, playerDefs.length),
+      score: 0,
+    })),
+    playerCount: playerDefs.length,
+    investigatorRole: INVESTIGATOR_ROLE,
+    suspectRoles: [...SUSPECT_ROLES],
+    suspectPlayerIds: [],
     roles: null,
     revealedPlayers: [],
     privatePeekQueue: [],
@@ -36,12 +59,16 @@ export function createGame(playerDefs = PLAYER_DEFS, options = {}) {
   }
 }
 
-export function dealRoles(playerDefs = PLAYER_DEFS, random = Math.random) {
+export function dealRoles(playerDefs = DEFAULT_PLAYER_DEFS, random = Math.random) {
   if (typeof playerDefs === 'function') {
     random = playerDefs
-    playerDefs = PLAYER_DEFS
+    playerDefs = DEFAULT_PLAYER_DEFS
   }
-  const shuffled = [...ROLE_IDS]
+  const availableRoles = playerDefs.length === 5 ? FIVE_PLAYER_ROLES : FOUR_PLAYER_ROLES
+  if (playerDefs.length !== 4 && playerDefs.length !== 5) {
+    throw new Error('A round requires four or five players.')
+  }
+  const shuffled = [...availableRoles]
   for (let index = shuffled.length - 1; index > 0; index -= 1) {
     const value = random()
     const swapIndex = Math.floor(Math.max(0, Math.min(0.999999999, value)) * (index + 1))
@@ -51,9 +78,12 @@ export function dealRoles(playerDefs = PLAYER_DEFS, random = Math.random) {
 }
 
 function isValidRoleAssignment(roles, playerIds) {
-  return roles
-    && ROLE_IDS.every((role) => playerIds.includes(roles[role]))
-    && new Set(ROLE_IDS.map((role) => roles[role])).size === playerIds.length
+  const expectedRoles = playerIds.length === 5 ? FIVE_PLAYER_ROLES : FOUR_PLAYER_ROLES
+  return (playerIds.length === 4 || playerIds.length === 5)
+    && roles
+    && expectedRoles.every((role) => playerIds.includes(roles[role]))
+    && Object.keys(roles).length === expectedRoles.length
+    && new Set(expectedRoles.map((role) => roles[role])).size === playerIds.length
 }
 
 function revealRole(state, phase, role, nextPhase) {
@@ -69,12 +99,12 @@ function revealRole(state, phase, role, nextPhase) {
 function finishGuess(state, playerId) {
   const chorId = state.roles[ROLE.CHOR]
   const wasCorrect = playerId === chorId
+  const sipahiId = state.roles[ROLE.SIPAHI]
   const updatedPlayers = state.players.map((player) => {
-    let points = 0
-    if (player.id === state.roles[ROLE.RAJA]) points = ROLE_INFO[ROLE.RAJA].points
-    if (player.id === state.roles[ROLE.SIPAHI]) points = ROLE_INFO[ROLE.SIPAHI].points
-    if (wasCorrect && player.id === state.roles[ROLE.MANTRI]) points = ROLE_INFO[ROLE.MANTRI].points
-    if (!wasCorrect && player.id === chorId) points = ROLE_INFO[ROLE.CHOR].points
+    const role = Object.keys(state.roles).find((key) => state.roles[key] === player.id)
+    let points = ROLE_INFO[role]?.points ?? 0
+    if (!wasCorrect && player.id === sipahiId) points = 0
+    if (!wasCorrect && player.id === chorId) points += ROLE_INFO[ROLE.SIPAHI].points
     return { ...player, score: player.score + points }
   })
 
@@ -109,6 +139,10 @@ export function gameReducer(state, action) {
         ...state,
         phase: state.players.some(({ human }) => human) ? 'private-peek' : 'reveal-king',
         roundNumber: state.roundNumber + 1,
+        playerCount: state.players.length,
+        investigatorRole: INVESTIGATOR_ROLE,
+        suspectRoles: [...SUSPECT_ROLES],
+        suspectPlayerIds: [action.roles[ROLE.MANTRI], action.roles[ROLE.CHOR]],
         roles: action.roles,
         revealedPlayers: [],
         privatePeekQueue: state.players.filter(({ human }) => human).map(({ id }) => id),
@@ -126,14 +160,16 @@ export function gameReducer(state, action) {
       }
     }
     case 'REVEAL_KING':
-      return revealRole(state, 'reveal-king', ROLE.RAJA, 'reveal-minister')
-    case 'REVEAL_MINISTER':
-      return revealRole(state, 'reveal-minister', ROLE.MANTRI, 'guess')
+      return revealRole(state, 'reveal-king', ROLE.RAJA, state.roles?.[ROLE.RANI] ? 'reveal-rani' : 'reveal-sipahi')
+    case 'REVEAL_RANI':
+      return revealRole(state, 'reveal-rani', ROLE.RANI, 'reveal-sipahi')
+    case 'REVEAL_SIPAHI':
+      return revealRole(state, 'reveal-sipahi', ROLE.SIPAHI, 'chant')
+    case 'BEGIN_INVESTIGATION':
+      return state.phase === 'chant' ? { ...state, phase: 'guess' } : state
     case 'GUESS': {
       if (state.phase !== 'guess' || !state.roles) return state
-      const eligibleIds = state.players.map(({ id }) => id).filter(
-        (id) => id !== state.roles[ROLE.RAJA] && id !== state.roles[ROLE.MANTRI],
-      )
+      const eligibleIds = [state.roles[ROLE.MANTRI], state.roles[ROLE.CHOR]]
       if (!eligibleIds.includes(action.playerId)) return state
       return finishGuess(state, action.playerId)
     }
@@ -161,13 +197,11 @@ export function chooseBotGuess(state, random = Math.random) {
   if (state.phase !== 'guess' || !state.roles) {
     return null
   }
-  const minister = state.players.find(({ id }) => id === state.roles[ROLE.MANTRI])
-  if (!minister || minister.human) {
+  const sipahi = state.players.find(({ id }) => id === state.roles[ROLE.SIPAHI])
+  if (!sipahi || sipahi.human) {
     return null
   }
-  const candidates = state.players.map(({ id }) => id).filter(
-    (id) => id !== state.roles[ROLE.RAJA] && id !== state.roles[ROLE.MANTRI],
-  )
+  const candidates = [state.roles[ROLE.MANTRI], state.roles[ROLE.CHOR]]
   const chorId = state.roles[ROLE.CHOR]
   const difficulty = state.difficulty ?? 'clever'
   const accuracy = { casual: 0.35, clever: 0.6, mastermind: 0.82 }[difficulty]

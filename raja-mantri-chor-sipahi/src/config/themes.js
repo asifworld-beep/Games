@@ -12,7 +12,7 @@ export const THEMES = {
     ambient: 1.4,
     directional: 3,
     lanternIntensity: 21,
-    colors: ['#e8b85b', '#d78162', '#739b88', '#8b81bc'],
+    colors: ['#e8b85b', '#d78162', '#739b88', '#8b81bc', '#d5a566'],
   },
   sapphire: {
     name: 'Midnight Sapphire Mahal',
@@ -27,7 +27,7 @@ export const THEMES = {
     ambient: 1.1,
     directional: 2.1,
     lanternIntensity: 24,
-    colors: ['#e5c779', '#91bfe0', '#8bb6a5', '#b0a1d8'],
+    colors: ['#e5c779', '#91bfe0', '#8bb6a5', '#b0a1d8', '#d49bb1'],
   },
   emerald: {
     name: 'Emerald Heritage Courtyard',
@@ -42,7 +42,7 @@ export const THEMES = {
     ambient: 1.7,
     directional: 2.8,
     lanternIntensity: 16,
-    colors: ['#ddb96b', '#c57b5c', '#75ad80', '#9694c0'],
+    colors: ['#ddb96b', '#c57b5c', '#75ad80', '#9694c0', '#d1a26d'],
   },
 }
 

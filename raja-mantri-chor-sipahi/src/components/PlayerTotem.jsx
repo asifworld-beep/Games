@@ -50,6 +50,29 @@ function Crown() {
   )
 }
 
+function Tiara() {
+  return (
+    <group position={[0, 1.48, 0]}>
+      <mesh position={[0, -0.02, 0]} rotation={[Math.PI / 2, 0, 0]}>
+        <torusGeometry args={[0.24, 0.035, 8, 24, Math.PI]} />
+        <meshStandardMaterial color={GOLD} metalness={0.78} roughness={0.22} />
+      </mesh>
+      {[-1, 0, 1].map((index) => (
+        <mesh key={index} position={[index * 0.14, 0.11 + (1 - Math.abs(index)) * 0.07, 0.04]}>
+          <octahedronGeometry args={[0.065, 0]} />
+          <meshStandardMaterial
+            color={index === 0 ? '#e8b6c4' : '#7bacc1'}
+            emissive={index === 0 ? '#7a2748' : '#174964'}
+            emissiveIntensity={0.28}
+            metalness={0.35}
+            roughness={0.2}
+          />
+        </mesh>
+      ))}
+    </group>
+  )
+}
+
 function MinisterAccessories({ scrollRef }) {
   return (
     <>
@@ -93,11 +116,11 @@ function GuardAccessories() {
       <group position={[0, 1.44, 0]}>
         <mesh scale={[1.05, 0.84, 1]} castShadow>
           <sphereGeometry args={[0.3, 10, 8]} />
-          <meshStandardMaterial color="#8f302b" metalness={0.38} roughness={0.42} />
+          <meshStandardMaterial color="#9b8048" metalness={0.62} roughness={0.34} />
         </mesh>
         <mesh position={[0, 0.2, 0]}>
           <coneGeometry args={[0.2, 0.25, 6]} />
-          <meshStandardMaterial color={GOLD} metalness={0.7} roughness={0.28} />
+          <meshStandardMaterial color="#c6a45e" metalness={0.78} roughness={0.24} />
         </mesh>
         <mesh position={[0, 0.12, 0.23]}>
           <sphereGeometry args={[0.065, 10, 8]} />
@@ -106,16 +129,16 @@ function GuardAccessories() {
       </group>
       <mesh position={[0.53, 0.82, 0.12]} rotation={[Math.PI / 2, 0, 0]} castShadow>
         <cylinderGeometry args={[0.23, 0.23, 0.1, 8]} />
-        <meshStandardMaterial color="#a93832" metalness={0.47} roughness={0.38} />
+        <meshStandardMaterial color="#80643a" metalness={0.72} roughness={0.3} />
       </mesh>
       <mesh position={[0.53, 0.82, 0.18]} rotation={[Math.PI / 2, 0, 0]}>
         <torusGeometry args={[0.19, 0.028, 8, 8]} />
-        <meshStandardMaterial color={GOLD} metalness={0.75} roughness={0.24} />
+        <meshStandardMaterial color="#e2c47a" metalness={0.84} roughness={0.2} />
       </mesh>
       {[-1, 1].map((side) => (
         <mesh key={side} position={[-0.52, 0.95, -0.12]} rotation={[0, 0, side * 0.24]} castShadow>
           <cylinderGeometry args={[0.027, 0.027, 0.94, 8]} />
-          <meshStandardMaterial color="#c5a15e" metalness={0.72} roughness={0.3} />
+          <meshStandardMaterial color="#d4b670" metalness={0.82} roughness={0.25} />
         </mesh>
       ))}
       <mesh position={[-0.52, 1.45, -0.12]} castShadow>
@@ -245,11 +268,13 @@ export default function PlayerTotem({
   const visible = Boolean(role && revealed)
   const accessoryRole = visible ? role : retainedRole
   const hasCrown = visible && accessoryRole === 'raja'
-  const hasMinisterLight = visible && accessoryRole === 'mantri' && phase === 'guess'
+  const hasChantGlow = visible && ['raja', 'rani'].includes(accessoryRole) && phase === 'chant'
+  const hasInvestigatorLight = visible && accessoryRole === 'sipahi' && phase === 'guess'
   const isCaught = visible && role === 'chor' && outcome === 'caught'
   const isEscapedThief = visible && role === 'chor' && outcome === 'escaped'
-  const slumpedMinister = visible && role === 'mantri' && outcome === 'escaped'
-  const accessoryColor = accessoryRole === 'raja' ? GOLD : accessoryRole === 'chor' ? '#e6b958' : accessoryRole === 'sipahi' ? '#d24a39' : '#edbe65'
+  const accessoryColor = accessoryRole === 'raja' || accessoryRole === 'rani'
+    ? GOLD
+    : accessoryRole === 'chor' ? '#e6b958' : accessoryRole === 'sipahi' ? '#c6a45e' : '#edbe65'
 
   useEffect(() => {
     if (!revealed && retainedRole) {
@@ -263,12 +288,12 @@ export default function PlayerTotem({
     const dt = Math.min(delta, 0.05)
     const elevationNow = springStep(dynamics.current.elevation, elevation, dt)
     const accessoryNow = springStep(dynamics.current.accessory, visible ? 1 : 0, dt)
-    const scrollNow = springStep(dynamics.current.scroll, visible && role === 'mantri' && outcome !== 'escaped' ? 1 : 0, dt)
+    const scrollNow = springStep(dynamics.current.scroll, visible && role === 'mantri' ? 1 : 0, dt)
     if (body.current) {
       const elapsed = outcomeStart.current === null ? 0 : clock.elapsedTime - outcomeStart.current
       const leap = isEscapedThief && elapsed < 1.8 ? Math.sin(Math.min(1, elapsed / 1.8) * Math.PI) * 0.48 : 0
       const royalHover = hasCrown ? Math.sin(clock.elapsedTime * 1.25) * 0.055 : 0
-      const defeat = isCaught || slumpedMinister
+      const defeat = isCaught
       body.current.position.y = elevationNow + leap + royalHover
       body.current.rotation.x = MathUtils.damp(body.current.rotation.x, defeat ? 0.26 : hasCrown ? -0.08 : 0, 5, dt)
       body.current.rotation.z = MathUtils.damp(
@@ -318,7 +343,9 @@ export default function PlayerTotem({
       cage.current.position.y = (1 - cageNow) * 1.45
     }
     if (crownLight.current) {
-      crownLight.current.intensity = hasCrown ? 25 * accessoryNow : hasMinisterLight ? 17 * accessoryNow : 0
+      crownLight.current.intensity = hasCrown ? 25 * accessoryNow
+        : hasChantGlow ? 21 * accessoryNow
+          : hasInvestigatorLight ? 17 * accessoryNow : 0
     }
     if (caughtLight.current) caughtLight.current.intensity = isCaught && outcomeAge < 1.8 ? 24 : 0
   })
@@ -382,6 +409,7 @@ export default function PlayerTotem({
                 </points>
               </>
             )}
+            {accessoryRole === 'rani' && <Tiara />}
             {accessoryRole === 'mantri' && <MinisterAccessories scrollRef={scroll} />}
             {accessoryRole === 'sipahi' && <GuardAccessories />}
             {accessoryRole === 'chor' && <ThiefAccessories />}
@@ -407,24 +435,24 @@ export default function PlayerTotem({
           </group>
         )}
       </group>
-      {visible && (hasCrown || hasMinisterLight || isCaught) && (
+      {visible && (hasCrown || hasChantGlow || hasInvestigatorLight || isCaught) && (
         <>
           <primitive object={crownTarget} position={[0, 1.05 + elevation, 0]} />
           <spotLight
             ref={crownLight}
             target={crownTarget}
             position={[0, 4.2 + elevation, 0]}
-            color={hasCrown ? '#ffd778' : hasMinisterLight ? '#f2ad50' : CRIMSON}
+            color={hasCrown || hasChantGlow ? '#ffd778' : hasInvestigatorLight ? '#f2ad50' : CRIMSON}
             angle={0.34}
             penumbra={0.65}
             distance={7}
             intensity={0}
           />
-          {(hasCrown || hasMinisterLight) && (
+          {(hasCrown || hasChantGlow || hasInvestigatorLight) && (
             <mesh position={[0, 2.2 + elevation, 0]}>
               <coneGeometry args={[0.72, 3.2, 24, 1, true]} />
               <meshBasicMaterial
-                color={hasCrown ? '#ffd778' : '#f2ad50'}
+                color={hasCrown || hasChantGlow ? '#ffd778' : '#f2ad50'}
                 transparent
                 opacity={hasCrown ? 0.025 : 0.018}
                 depthWrite={false}

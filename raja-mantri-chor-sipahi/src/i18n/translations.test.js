@@ -10,12 +10,22 @@ test('exposes all requested Indian languages and RTL direction for Urdu', () => 
   assert.equal(getDirection('hi'), 'ltr')
 })
 
-test('localizes a required guide label and all four role names in each language', () => {
+test('localizes a required guide label and all five role names in each language', () => {
   for (const { id } of LANGUAGES) {
     assert.ok(translate(id, 'guide'))
-    for (const role of ['raja', 'mantri', 'chor', 'sipahi']) {
+    for (const role of ['raja', 'rani', 'mantri', 'chor', 'sipahi']) {
       assert.ok(translateRole(id, role))
     }
+  }
+})
+
+test('all languages describe Sipahi investigating the hidden Mantri and Chor', () => {
+  for (const { id } of LANGUAGES) {
+    assert.ok(translate(id, 'step3Body'))
+    assert.ok(translate(id, 'step4Body'))
+    assert.equal(translate(id, 'kingCallout'), '“Mera Sipahi Kaun?”')
+    assert.equal(translate(id, 'chant'), '“Sipahi, Sipahi, Chor ko pakdo!”')
+    assert.ok(translate(id, 'fivePlayers'))
   }
 })
 

@@ -3,7 +3,7 @@ import { ArrowRight, Crown, Eye, Shield, Sparkles, X } from 'lucide-react'
 import { translate, translateRole } from '../i18n/translations.js'
 
 const STEPS = [
-  { title: 'step1', body: 'step1Body', icon: Sparkles, roles: [['Raja', '1000'], ['Mantri', '800'], ['Sipahi', '500'], ['Chor', '0']] },
+  { title: 'step1', body: 'step1Body', icon: Sparkles, roles: [['Raja', '1000'], ['Rani', '900'], ['Mantri', '800'], ['Sipahi', '500'], ['Chor', '0']] },
   { title: 'step2', body: 'step2Body', icon: Crown },
   { title: 'step3', body: 'step3Body', icon: Eye },
   { title: 'step4', body: 'step4Body', icon: Shield },
@@ -53,7 +53,7 @@ export default function HowToPlay({ open, onClose, language }) {
                       ))}
                     </div>
                   )}
-                  {index === 3 && <div className="steal-diagram"><span>{translateRole(language, 'mantri')} <b>−800</b></span><ArrowRight size={14} /><span>{translateRole(language, 'chor')} <b>+800</b></span></div>}
+                  {index === 3 && <div className="steal-diagram"><span>{translateRole(language, 'sipahi')} <b>−500</b></span><ArrowRight size={14} /><span>{translateRole(language, 'chor')} <b>+500</b></span></div>}
                 </article>
               ))}
             </div>

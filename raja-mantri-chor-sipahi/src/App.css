@@ -1,7 +1,7 @@
 .game-shell {
   width: min(1200px, calc(100% - 64px));
   margin: 0 auto;
-  min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
 }
@@ -21,7 +21,7 @@
   color: #f0e5d0;
   text-decoration: none;
   letter-spacing: 0.12em;
-  font-size: 11px;
+  font-size: max(0.8rem, 0.6875rem);
   font-weight: 700;
 }
 
@@ -49,7 +49,7 @@
 
 .topbar-meta {
   color: #8d9688;
-  font-size: 9px;
+  font-size: max(0.8rem, 0.5625rem);
   letter-spacing: 0.2em;
 }
 
@@ -99,7 +99,7 @@
 .eyebrow {
   margin: 0 0 10px;
   color: #c3a36c;
-  font-size: 9px;
+  font-size: max(0.8rem, 0.5625rem);
   font-weight: 700;
   letter-spacing: 0.21em;
 }
@@ -119,7 +119,7 @@ h1 {
   margin-bottom: 8px;
   color: #f3eadb;
   font-family: Georgia, 'Times New Roman', serif;
-  font-size: clamp(32px, 4vw, 48px);
+  font-size: clamp(2rem, 4vw, 3rem);
   line-height: 1.03;
   font-weight: 400;
   letter-spacing: -0.035em;
@@ -133,7 +133,7 @@ h1 em {
 .intro-copy {
   margin: 0;
   color: #9ca398;
-  font-size: 12px;
+  font-size: max(0.8rem, 0.75rem);
 }
 
 .round-chip {
@@ -146,14 +146,14 @@ h1 em {
   color: #999c8f;
   border: 1px solid rgba(228, 213, 181, 0.16);
   border-radius: 4px;
-  font-size: 8px;
+  font-size: max(0.8rem, 0.5rem);
   letter-spacing: 0.14em;
 }
 
 .round-chip strong {
   color: #e8d4a9;
   font-family: Georgia, 'Times New Roman', serif;
-  font-size: 16px;
+  font-size: 1rem;
   font-weight: 400;
 }
 
@@ -180,7 +180,7 @@ h1 em {
   justify-content: space-between;
   padding: 0 16px;
   color: #c6c6b5;
-  font-size: 9px;
+  font-size: max(0.8rem, 0.5625rem);
   font-weight: 700;
   letter-spacing: 0.15em;
 }
@@ -188,7 +188,7 @@ h1 em {
 .scene-label {
   gap: 6px;
   color: #8a9285;
-  font-size: 8px;
+  font-size: max(0.8rem, 0.5rem);
   font-weight: 500;
 }
 
@@ -216,7 +216,7 @@ h1 em {
   place-items: center;
   color: #d3c7ae;
   font-family: Georgia, 'Times New Roman', serif;
-  font-size: 15px;
+  font-size: 0.9375rem;
 }
 
 .player-seat {
@@ -248,11 +248,11 @@ h1 em {
 .seat-avatar {
   width: 25px;
   height: 25px;
-  font-size: 11px;
+  font-size: max(0.8rem, 0.6875rem);
 }
 
 .seat-name {
-  font-size: 10px;
+  font-size: max(0.8rem, 0.625rem);
   font-weight: 600;
 }
 
@@ -278,6 +278,26 @@ h1 em {
   top: 47%;
 }
 
+.seat-northeast {
+  top: 18px;
+  right: 16px;
+}
+
+.seat-southeast {
+  right: 16px;
+  bottom: 76px;
+}
+
+.seat-southwest {
+  left: 16px;
+  bottom: 76px;
+}
+
+.seat-northwest {
+  top: 18px;
+  left: 16px;
+}
+
 .table-caption {
   position: absolute;
   z-index: 1;
@@ -287,7 +307,7 @@ h1 em {
   gap: 8px;
   transform: translate(-50%, -50%);
   color: rgba(239, 218, 173, 0.78);
-  font-size: 8px;
+  font-size: max(0.8rem, 0.5rem);
   letter-spacing: 0.2em;
   white-space: nowrap;
   pointer-events: none;
@@ -312,7 +332,7 @@ h1 em {
   border: 1px solid rgba(232, 214, 174, 0.16);
   border-radius: 4px;
   background: rgba(15, 23, 20, 0.86);
-  font-size: 9px;
+  font-size: max(0.8rem, 0.5625rem);
   white-space: nowrap;
 }
 
@@ -338,14 +358,14 @@ h1 em {
 
 .panel-title .eyebrow {
   margin-bottom: 4px;
-  font-size: 8px;
+  font-size: max(0.8rem, 0.5rem);
 }
 
 .panel-title h2 {
   margin: 0;
   color: #ece3d2;
   font-family: Georgia, 'Times New Roman', serif;
-  font-size: 22px;
+  font-size: 1.375rem;
   font-weight: 400;
 }
 
@@ -353,7 +373,7 @@ h1 em {
   margin-left: 5px;
   color: #9a927f;
   font-family: system-ui, sans-serif;
-  font-size: 9px;
+  font-size: max(0.8rem, 0.5625rem);
 }
 
 .player-list {
@@ -373,7 +393,7 @@ h1 em {
 .row-avatar {
   width: 30px;
   height: 30px;
-  font-size: 12px;
+  font-size: max(0.8rem, 0.75rem);
 }
 
 .row-details {
@@ -385,18 +405,18 @@ h1 em {
 
 .row-details b {
   color: #ded8c9;
-  font-size: 10px;
+  font-size: max(0.8rem, 0.625rem);
   font-weight: 600;
 }
 
 .row-details small {
   color: #858b7f;
-  font-size: 8px;
+  font-size: max(0.8rem, 0.5rem);
 }
 
 .player-points {
   color: #b9a375;
-  font-size: 8px;
+  font-size: max(0.8rem, 0.5rem);
   letter-spacing: 0.09em;
 }
 
@@ -412,21 +432,21 @@ h1 em {
 
 .note-star {
   color: #d3b477;
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 
 .rule-note b {
   display: block;
   margin-bottom: 5px;
   color: #d8c49c;
-  font-size: 8px;
+  font-size: max(0.8rem, 0.5rem);
   letter-spacing: 0.12em;
 }
 
 .rule-note p {
   margin: 0;
   color: #a4a295;
-  font-size: 9px;
+  font-size: max(0.8rem, 0.5625rem);
   line-height: 1.55;
 }
 
@@ -441,7 +461,7 @@ h1 em {
   border: 1px solid #d6b777;
   border-radius: 3px;
   background: #d6b777;
-  font-size: 9px;
+  font-size: max(0.8rem, 0.5625rem);
   font-weight: 800;
   letter-spacing: 0.12em;
   cursor: pointer;
@@ -460,7 +480,7 @@ h1 em {
   gap: 6px;
   margin: 11px 0 0;
   color: #828a7e;
-  font-size: 8px;
+  font-size: max(0.8rem, 0.5rem);
 }
 
 .privacy-note span {
@@ -477,7 +497,7 @@ h1 em {
   margin-top: auto;
   padding: 19px 2px 14px;
   color: #6f786e;
-  font-size: 7px;
+  font-size: max(0.8rem, 0.4375rem);
   letter-spacing: 0.17em;
 }
 
@@ -516,6 +536,42 @@ h1 em {
 }
 
 @media (max-width: 520px) {
+  .table-caption,
+  .arena-status {
+    display: none;
+  }
+
+  .game-shell.has-action-dock .intro-row {
+    display: none;
+  }
+
+  .game-shell.has-action-dock .brand > span:last-child {
+    display: none;
+  }
+
+  .game-shell.has-action-dock .topbar-round {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: auto;
+    color: #b7ad99;
+    font-size: 0.8rem;
+  }
+
+  .game-shell.has-action-dock .topbar-round strong {
+    color: #eee3ce;
+    font-size: 0.875rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .game-shell.has-action-dock .topbar-round b {
+    padding: 3px 6px;
+    color: #e6ca8c;
+    border: 1px solid rgba(214, 183, 119, 0.4);
+    border-radius: 999px;
+    font-size: 0.8rem;
+  }
+
   .game-shell {
     width: calc(100% - 24px);
   }
@@ -525,7 +581,7 @@ h1 em {
   }
 
   .topbar-meta {
-    font-size: 7px;
+    font-size: max(0.8rem, 0.4375rem);
     letter-spacing: 0.12em;
   }
 
@@ -534,7 +590,7 @@ h1 em {
   }
 
   h1 {
-    font-size: 34px;
+    font-size: 2.125rem;
   }
 
   .intro-copy {
@@ -544,16 +600,16 @@ h1 em {
 
   .round-chip {
     padding: 8px 10px;
-    font-size: 7px;
+    font-size: max(0.8rem, 0.4375rem);
   }
 
   .arena-heading {
     padding: 0 10px;
-    font-size: 8px;
+    font-size: max(0.8rem, 0.5rem);
   }
 
   .scene-label {
-    font-size: 7px;
+    font-size: max(0.8rem, 0.4375rem);
   }
 
   .arena {
@@ -580,20 +636,20 @@ h1 em {
   }
 
   .seat-name {
-    font-size: 9px;
+    font-size: max(0.8rem, 0.5625rem);
   }
 
   .table-caption {
     top: 52%;
-    font-size: 7px;
+    font-size: max(0.8rem, 0.4375rem);
   }
 
   .arena-status {
-    font-size: 8px;
+    font-size: max(0.8rem, 0.5rem);
   }
 
   .footer-line {
-    font-size: 6px;
+    font-size: max(0.8rem, 0.375rem);
   }
 }
 
@@ -645,7 +701,7 @@ h1 em {
   margin: 0;
   color: #f0e5d0;
   font-family: Georgia, 'Times New Roman', serif;
-  font-size: 25px;
+  font-size: 1.5625rem;
   font-weight: 400;
 }
 
@@ -668,7 +724,7 @@ h1 em {
 .setting-section h3 {
   margin: 0 0 11px;
   color: #ddc58f;
-  font-size: 10px;
+  font-size: max(0.8rem, 0.625rem);
   letter-spacing: 0.11em;
   text-transform: uppercase;
 }
@@ -679,7 +735,7 @@ h1 em {
   justify-content: space-between;
   margin: 10px 0 6px;
   color: #a9ad9d;
-  font-size: 9px;
+  font-size: max(0.8rem, 0.5625rem);
 }
 
 .text-input {
@@ -692,7 +748,7 @@ h1 em {
   outline: none;
   background: #18231d;
   font: inherit;
-  font-size: 11px;
+  font-size: max(0.8rem, 0.6875rem);
 }
 
 .text-input:focus {
@@ -742,7 +798,7 @@ h1 em {
   border: 1px solid rgba(228, 213, 181, 0.14);
   border-radius: 4px;
   background: rgba(3, 10, 7, 0.18);
-  font-size: 9px;
+  font-size: max(0.8rem, 0.5625rem);
   text-align: start;
   cursor: pointer;
 }
@@ -760,7 +816,7 @@ h1 em {
   min-height: 34px;
   color: #bec0b3;
   border-bottom: 1px solid rgba(228, 213, 181, 0.08);
-  font-size: 10px;
+  font-size: max(0.8rem, 0.625rem);
 }
 
 .toggle-row input {
@@ -783,7 +839,7 @@ h1 em {
 
 .saved-hint {
   color: #8f988c;
-  font-size: 9px;
+  font-size: max(0.8rem, 0.5625rem);
 }
 
 .modal-done {
@@ -794,6 +850,7 @@ h1 em {
 
 .guide-modal {
   padding: 0 22px 20px;
+  overflow-y: auto;
 }
 
 .guide-modal .modal-heading {
@@ -803,7 +860,7 @@ h1 em {
 .guide-intro {
   margin: 17px 0 13px;
   color: #aeb2a4;
-  font-size: 11px;
+  font-size: max(0.8rem, 0.6875rem);
 }
 
 .guide-steps {
@@ -829,7 +886,7 @@ h1 em {
   padding-top: 3px;
   color: #9c8b65;
   font-family: Georgia, 'Times New Roman', serif;
-  font-size: 10px;
+  font-size: max(0.8rem, 0.625rem);
 }
 
 .step-icon {
@@ -846,14 +903,14 @@ h1 em {
   margin: 2px 0 4px;
   color: #e7d9bb;
   font-family: Georgia, 'Times New Roman', serif;
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 400;
 }
 
 .step-copy p {
   margin: 0;
   color: #a3a99a;
-  font-size: 9px;
+  font-size: max(0.8rem, 0.5625rem);
   line-height: 1.5;
 }
 
@@ -874,7 +931,7 @@ h1 em {
   color: #d1c6ad;
   border: 1px solid rgba(214, 183, 119, 0.19);
   border-radius: 4px;
-  font-size: 8px;
+  font-size: max(0.8rem, 0.5rem);
 }
 
 .role-badge small {
@@ -884,7 +941,7 @@ h1 em {
 .steal-diagram {
   align-items: center;
   color: #bcb7a8;
-  font-size: 8px;
+  font-size: max(0.8rem, 0.5rem);
 }
 
 .steal-diagram span {
@@ -916,6 +973,47 @@ h1 em {
   margin: 0;
 }
 
+.player-count-picker {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+  align-items: center;
+  gap: 8px;
+  width: min(100%, 380px);
+  margin-bottom: 14px;
+}
+
+.player-count-picker > .eyebrow {
+  margin: 0;
+}
+
+.player-count-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.player-count-option {
+  min-height: 44px;
+  color: #aeb2a3;
+  border: 1px solid rgba(228, 213, 181, 0.14);
+  border-radius: 5px;
+  background: rgba(3, 10, 7, 0.14);
+  font: inherit;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.player-count-option.selected {
+  color: #e7d09a;
+  border-color: rgba(231, 208, 154, 0.48);
+  background: rgba(183, 142, 71, 0.13);
+}
+
+.player-count-option:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
 .mode-tabs {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -934,7 +1032,7 @@ h1 em {
   border: 1px solid rgba(228, 213, 181, 0.14);
   border-radius: 5px;
   background: rgba(3, 10, 7, 0.14);
-  font-size: 8px;
+  font-size: max(0.8rem, 0.5rem);
   cursor: pointer;
   transition: border-color 150ms ease, color 150ms ease, background 150ms ease;
 }
@@ -953,7 +1051,7 @@ h1 em {
   color: #a5a99b;
   border: 1px solid rgba(228, 213, 181, 0.1);
   border-radius: 4px;
-  font-size: 9px;
+  font-size: max(0.8rem, 0.5625rem);
   line-height: 1.5;
 }
 
@@ -981,20 +1079,20 @@ h1 em {
 .field-with-seat > span {
   width: 18px;
   color: #cfb67e;
-  font-size: 9px;
+  font-size: max(0.8rem, 0.5625rem);
   text-align: center;
 }
 
 .field-with-seat .text-input {
   min-height: 34px;
-  font-size: 9px;
+  font-size: max(0.8rem, 0.5625rem);
 }
 
 .privacy-caption,
 .online-notice {
   margin: 0;
   color: #939b8e;
-  font-size: 8px;
+  font-size: max(0.8rem, 0.5rem);
   line-height: 1.45;
 }
 
@@ -1025,7 +1123,7 @@ h1 em {
   border: 1px solid rgba(214, 183, 119, 0.3);
   border-radius: 4px;
   background: rgba(214, 183, 119, 0.06);
-  font-size: 8px;
+  font-size: max(0.8rem, 0.5rem);
   cursor: pointer;
 }
 
@@ -1060,12 +1158,12 @@ h1 em {
   align-items: center;
   justify-content: space-between;
   color: #a8ad9f;
-  font-size: 9px;
+  font-size: max(0.8rem, 0.5625rem);
 }
 
 .room-code-header strong {
   color: #e3c77f;
-  font-size: 15px;
+  font-size: 0.9375rem;
   letter-spacing: 0.2em;
 }
 
@@ -1083,7 +1181,7 @@ h1 em {
   color: #d1c9b8;
   border: 1px solid rgba(228, 213, 181, 0.1);
   border-radius: 3px;
-  font-size: 8px;
+  font-size: max(0.8rem, 0.5rem);
 }
 
 .room-player i {
@@ -1104,32 +1202,32 @@ h1 em {
 .room-player small {
   margin-left: auto;
   color: #c9ab6a;
-  font-size: 6px;
+  font-size: max(0.8rem, 0.375rem);
 }
 
 .fill-bots-button {
   align-self: flex-start;
-  font-size: 8px;
+  font-size: max(0.8rem, 0.5rem);
 }
 
 .form-error {
   margin: 0;
   color: #e39b84;
-  font-size: 9px;
+  font-size: max(0.8rem, 0.5625rem);
   line-height: 1.45;
 }
 
 .connection-status {
   margin: 0;
   color: #d4bc7c;
-  font-size: 9px;
+  font-size: max(0.8rem, 0.5625rem);
 }
 
 .lobby-start {
   width: 100%;
   min-height: 40px;
   margin-top: auto;
-  font-size: 8px;
+  font-size: max(0.8rem, 0.5rem);
 }
 
 .privacy-curtain {
@@ -1162,14 +1260,14 @@ h1 em {
   margin: 0 0 8px;
   color: #eee3ce;
   font-family: Georgia, 'Times New Roman', serif;
-  font-size: 23px;
+  font-size: 1.4375rem;
   font-weight: 400;
 }
 
 .curtain-card > p:not(.eyebrow) {
   margin: 0 0 18px;
   color: #a2a798;
-  font-size: 11px;
+  font-size: max(0.8rem, 0.6875rem);
 }
 
 .curtain-card .primary-button {
@@ -1186,7 +1284,7 @@ h1 em {
   color: #30291c;
   border-radius: 12px 12px 12px 3px;
   background: #eee0be;
-  font-size: 12px;
+  font-size: max(0.8rem, 0.75rem);
   white-space: nowrap;
 }
 
@@ -1230,7 +1328,7 @@ h1 em {
   border: 0;
   border-radius: 4px;
   background: transparent;
-  font-size: 10px;
+  font-size: max(0.8rem, 0.625rem);
   text-align: start;
   cursor: pointer;
 }
@@ -1252,7 +1350,7 @@ h1 em {
   border: 1px solid rgba(222, 194, 137, 0.45);
   border-radius: 50%;
   background: rgba(17, 26, 23, 0.9);
-  font-size: 9px;
+  font-size: max(0.8rem, 0.5625rem);
   font-variant-numeric: tabular-nums;
 }
 
@@ -1260,7 +1358,7 @@ h1 em {
   margin-top: 9px;
   color: #d8be83;
   font-family: Georgia, 'Times New Roman', serif;
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-style: italic;
   text-align: center;
 }
@@ -1310,7 +1408,7 @@ h1 em {
   border: 1px solid #f1dfb2;
   border-radius: 10px;
   background: #d7b875;
-  font-size: 9px;
+  font-size: max(0.8rem, 0.5625rem);
   font-weight: 800;
 }
 
@@ -1354,18 +1452,18 @@ h1 em {
 
 .chat-title {
   color: #d6bd82;
-  font-size: 11px;
+  font-size: max(0.8rem, 0.6875rem);
 }
 
 .chat-title strong {
   color: #eee3ce;
-  font-size: 11px;
+  font-size: max(0.8rem, 0.6875rem);
 }
 
 .chat-muted-status {
   overflow: hidden;
   color: #92988a;
-  font-size: 8px;
+  font-size: max(0.8rem, 0.5rem);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -1398,7 +1496,7 @@ h1 em {
 .chat-empty {
   margin: auto;
   color: #a4a99b;
-  font-size: 10px;
+  font-size: max(0.8rem, 0.625rem);
   text-align: center;
 }
 
@@ -1418,7 +1516,7 @@ h1 em {
   color: #1c211a;
   border-radius: 50%;
   background: var(--chat-avatar);
-  font-size: 9px;
+  font-size: max(0.8rem, 0.5625rem);
   font-weight: 800;
 }
 
@@ -1446,7 +1544,7 @@ h1 em {
 .chat-message-meta strong {
   overflow: hidden;
   color: #d8c28e;
-  font-size: 9px;
+  font-size: max(0.8rem, 0.5625rem);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -1454,13 +1552,13 @@ h1 em {
 .chat-message-meta time {
   flex: none;
   color: #777f73;
-  font-size: 7px;
+  font-size: max(0.8rem, 0.4375rem);
 }
 
 .chat-message-body p {
   margin: 3px 0 0;
   color: #e2ddcf;
-  font-size: 10px;
+  font-size: max(0.8rem, 0.625rem);
   line-height: 1.4;
   overflow-wrap: anywhere;
 }
@@ -1471,7 +1569,7 @@ h1 em {
   gap: 7px;
   margin: 0 0 0 31px;
   color: #a5a99b;
-  font-size: 8px;
+  font-size: max(0.8rem, 0.5rem);
 }
 
 .typing-dots {
@@ -1504,7 +1602,7 @@ h1 em {
 .chat-quick-label {
   margin: 0 0 5px;
   color: #a6a18f;
-  font-size: 8px;
+  font-size: max(0.8rem, 0.5rem);
 }
 
 .chat-quick-chips {
@@ -1523,7 +1621,7 @@ h1 em {
   border: 1px solid rgba(214, 183, 119, 0.22);
   border-radius: 14px;
   background: rgba(214, 183, 119, 0.06);
-  font-size: 8px;
+  font-size: max(0.8rem, 0.5rem);
   white-space: nowrap;
   cursor: pointer;
 }
@@ -1553,7 +1651,7 @@ h1 em {
   outline: none;
   background: rgba(5, 12, 8, 0.38);
   font: inherit;
-  font-size: 10px;
+  font-size: max(0.8rem, 0.625rem);
 }
 
 .chat-input-row input:focus {
@@ -1581,7 +1679,7 @@ h1 em {
   display: block;
   width: max-content;
   min-width: 120px;
-  max-width: 180px;
+  max-width: min(180px, calc(100vw - 32px));
   white-space: normal;
   padding: 7px 10px;
   color: #31291b;
@@ -1589,7 +1687,7 @@ h1 em {
   border-radius: 12px 12px 12px 3px;
   background: rgba(248, 235, 204, 0.96);
   box-shadow: 0 5px 16px rgba(0, 0, 0, 0.28);
-  font: 600 11px/1.35 system-ui, sans-serif;
+  font: 600 max(0.8rem, 0.6875rem)/1.35 system-ui, sans-serif;
   text-align: center;
   overflow-wrap: break-word;
   word-break: normal;
@@ -1670,12 +1768,490 @@ h1 em {
 
   .mode-card {
     min-height: 52px;
-    font-size: 7px;
+    font-size: max(0.8rem, 0.4375rem);
   }
 
   .seat-emote {
     max-width: 115px;
-    font-size: 9px;
+    font-size: max(0.8rem, 0.5625rem);
+  }
+}
+
+:root {
+  --font-display: Georgia, "Times New Roman", serif;
+  --font-body: Inter, ui-sans-serif, system-ui, sans-serif;
+}
+
+h1,
+.modal-heading h2,
+.round-chip strong,
+.panel-title h2,
+.rank-number,
+.action-card h3,
+.step-number,
+.step-copy h3,
+.curtain-card h2 {
+  font-family: var(--font-display);
+}
+
+body {
+  overflow-x: hidden;
+}
+
+.game-shell {
+  padding-top: env(safe-area-inset-top);
+}
+
+.primary-button,
+.secondary-button {
+  min-height: 44px;
+  font-size: max(0.9375rem, 1em);
+}
+
+.settings-content,
+.guide-steps,
+.chat-messages {
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.typography-section {
+  grid-column: 1 / -1;
+}
+
+.font-scale-options {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.font-scale-options .setting-choice {
+  justify-content: center;
+  min-height: 44px;
+  padding-inline: 5px;
+  text-align: center;
+}
+
+.typography-preview {
+  margin: 12px 0 0;
+  padding: 12px;
+  color: #eee3ce;
+  border: 1px solid rgba(214, 183, 119, 0.25);
+  border-radius: 6px;
+  background: rgba(214, 183, 119, 0.07);
+  font-family: var(--font-body);
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.setting-choice {
+  min-height: 44px;
+  font-size: 0.875rem;
+}
+
+.text-input {
+  min-height: 44px;
+  font-size: 0.9375rem;
+}
+
+.modal-done,
+.guide-modal > .modal-done {
+  min-height: 48px;
+  font-size: 1rem;
+}
+
+@media (max-width: 520px) {
+  .game-shell {
+    width: 100%;
+    padding-right: max(12px, env(safe-area-inset-right));
+    padding-left: max(12px, env(safe-area-inset-left));
+  }
+
+  .topbar {
+    min-height: 60px;
+    height: auto;
+    gap: 8px;
+  }
+
+  .brand {
+    gap: 7px;
+    font-size: 0.8rem;
+    letter-spacing: 0.08em;
+  }
+
+  .brand-mark {
+    width: 32px;
+    height: 32px;
+    flex: none;
+  }
+
+  .topbar-meta {
+    display: none;
+  }
+
+  .header-actions {
+    gap: 4px;
+  }
+
+  .icon-button {
+    width: 44px;
+    height: 44px;
+  }
+
+  .intro-row {
+    gap: 12px;
+    padding: 18px 0 14px;
+  }
+
+  h1 {
+    font-size: clamp(1.75rem, 8vw, 2.25rem);
+    line-height: 1.08;
+  }
+
+  .intro-copy {
+    max-width: 34rem;
+    font-size: max(0.875rem, 1em);
+    line-height: 1.45;
+  }
+
+  .round-chip {
+    max-width: 100%;
+    flex-wrap: wrap;
+    gap: 7px;
+    padding: 8px 10px;
+    font-size: 0.8rem;
+    letter-spacing: 0.05em;
+  }
+
+  .round-chip strong {
+    font-size: 1.125rem;
+  }
+
+  .game-layout {
+    gap: 12px;
+  }
+
+  .arena-card,
+  .side-panel {
+    border-radius: 10px;
+  }
+
+  .arena-heading {
+    height: 44px;
+    font-size: 0.8rem;
+    letter-spacing: 0.08em;
+  }
+
+  .scene-label {
+    font-size: 0.8rem;
+  }
+
+  .arena {
+    height: clamp(300px, 56dvh, 430px);
+    min-height: 300px;
+  }
+
+  .player-seat {
+    max-width: min(110px, 32vw);
+    min-width: 0;
+    gap: 5px;
+    padding: 4px 8px 4px 4px;
+  }
+
+  .seat-label-group {
+    min-width: 0;
+    max-width: 76px;
+  }
+
+  .seat-name {
+    max-width: 76px;
+    overflow: hidden;
+    font-size: 0.8rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .seat-role {
+    overflow: hidden;
+    font-size: 0.8rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .seat-avatar {
+    width: 28px;
+    height: 28px;
+    font-size: 0.875rem;
+  }
+
+  .seat-west {
+    left: 8px;
+  }
+
+  .seat-east {
+    right: 8px;
+  }
+
+  .seat-northeast,
+  .seat-northwest {
+    top: 12px;
+  }
+
+  .seat-southeast,
+  .seat-southwest {
+    bottom: 12px;
+  }
+
+  .seat-northeast,
+  .seat-southeast {
+    right: 8px;
+  }
+
+  .seat-northwest,
+  .seat-southwest {
+    left: 8px;
+  }
+
+  .game-shell.has-action-dock .seat-southeast,
+  .game-shell.has-action-dock .seat-southwest {
+    bottom: 76px;
+  }
+
+  .table-caption {
+    max-width: calc(100% - 32px);
+    overflow: hidden;
+    font-size: 0.8rem;
+    letter-spacing: 0.08em;
+    text-overflow: ellipsis;
+  }
+
+  .arena-status {
+    bottom: 12px;
+    min-height: 40px;
+    max-width: calc(100% - 100px);
+    overflow: hidden;
+    font-size: 0.8rem;
+    text-overflow: ellipsis;
+  }
+
+  .emote-wrapper {
+    right: 10px;
+    bottom: 9px;
+  }
+
+  .emote-trigger {
+    width: 44px;
+    height: 44px;
+  }
+
+  .side-panel {
+    padding: 14px 12px 12px;
+  }
+
+  .panel-title h2 {
+    font-size: 1.4rem;
+  }
+
+  .player-row {
+    min-height: 58px;
+  }
+
+  .row-details b,
+  .row-details small,
+  .player-points,
+  .scoring-label {
+    font-size: 0.8rem;
+  }
+
+  .action-card h3 {
+    font-size: 1.25rem;
+    line-height: 1.25;
+  }
+
+  .action-card > p:not(.eyebrow) {
+    font-size: 0.875rem;
+  }
+
+  .action-card .primary-button {
+    min-height: 48px;
+    font-size: 1rem;
+  }
+
+  .footer-line {
+    flex-wrap: wrap;
+    padding-bottom: max(14px, env(safe-area-inset-bottom));
+    font-size: 0.8rem;
+    letter-spacing: 0.08em;
+  }
+
+  .modal-backdrop {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .settings-modal,
+  .guide-modal {
+    width: 100%;
+    max-height: 82dvh;
+    border-radius: 20px 20px 0 0;
+  }
+
+  .settings-content {
+    min-height: 0;
+    padding-bottom: 16px;
+  }
+
+  .settings-modal .modal-heading,
+  .guide-modal .modal-heading {
+    position: sticky;
+    z-index: 1;
+    top: 0;
+    background: rgba(28, 39, 32, 0.98);
+  }
+
+  .settings-modal .modal-footer {
+    position: sticky;
+    z-index: 1;
+    bottom: 0;
+    padding-bottom: max(13px, env(safe-area-inset-bottom));
+    background: rgba(22, 32, 27, 0.98);
+  }
+
+  .guide-modal {
+    padding-bottom: max(16px, env(safe-area-inset-bottom));
+  }
+
+  .guide-steps {
+    max-height: none;
+    overflow: visible;
+  }
+
+  .guide-step {
+    grid-template-columns: 24px 36px minmax(0, 1fr);
+  }
+
+  .step-copy p,
+  .guide-intro,
+  .role-badge,
+  .steal-diagram {
+    font-size: 0.875rem;
+    line-height: 1.5;
+  }
+
+  .chat-drawer {
+    bottom: max(12px, env(safe-area-inset-bottom));
+    left: max(12px, env(safe-area-inset-left));
+  }
+
+  .chat-panel,
+  .chat-drawer.is-open .chat-panel {
+    position: fixed;
+    z-index: 21;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: min(72dvh, 600px);
+    max-height: 82dvh;
+    min-height: 280px;
+    border-right: 0;
+    border-bottom: 0;
+    border-left: 0;
+    border-radius: 20px 20px 0 0;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .chat-drawer.is-open .chat-toggle {
+    visibility: hidden;
+    pointer-events: none;
+  }
+
+  .chat-header {
+    min-height: 56px;
+    padding: 6px 12px;
+  }
+
+  .chat-title,
+  .chat-title strong {
+    font-size: 0.9375rem;
+  }
+
+  .chat-muted-status {
+    font-size: 0.8rem;
+  }
+
+  .chat-message-meta strong,
+  .chat-message-meta time,
+  .chat-message-body p,
+  .chat-empty,
+  .chat-quick-label,
+  .chat-quick-chips button,
+  .chat-input-row input {
+    font-size: 0.875rem;
+  }
+
+  .chat-quick-chips button {
+    padding-inline: 12px;
+  }
+
+  .chat-input-row input {
+    min-height: 44px;
+  }
+
+  .game-shell p:not(.eyebrow) {
+    font-size: max(0.875rem, 1em);
+  }
+
+  .speech-bubble {
+    max-width: min(160px, calc(100vw - 40px));
+    min-width: 0;
+    font-size: 0.875rem;
+  }
+
+  .turn-timer {
+    width: 40px;
+    height: 40px;
+    font-size: 0.875rem;
+  }
+
+  .font-scale-options {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 520px) and (orientation: landscape) {
+  .game-shell.has-action-dock .action-message {
+    max-height: 40dvh;
+  }
+
+  .intro-row {
+    padding-block: 10px;
+  }
+
+  .arena {
+    height: 55dvh;
+    min-height: 230px;
+  }
+
+  .settings-modal,
+  .guide-modal {
+    max-height: 90dvh;
+  }
+
+  .chat-panel,
+  .chat-drawer.is-open .chat-panel {
+    height: 82dvh;
+    max-height: 90dvh;
+  }
+}
+
+@media (min-width: 521px) {
+  .modal-backdrop {
+    padding: 18px;
+  }
+
+  .glass-modal {
+    border-radius: 16px;
   }
 }
 
@@ -1697,7 +2273,7 @@ h1 em {
 
 .seat-role {
   color: #e0c17e;
-  font-size: 7px;
+  font-size: max(0.8rem, 0.4375rem);
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
@@ -1710,7 +2286,7 @@ h1 em {
   color: #211d15;
   background: #e6c77e;
   border-radius: 50%;
-  font-size: 11px;
+  font-size: max(0.8rem, 0.6875rem);
   font-weight: 800;
 }
 
@@ -1718,7 +2294,7 @@ h1 em {
   width: 12px;
   color: #9f947b;
   font-family: Georgia, 'Times New Roman', serif;
-  font-size: 10px;
+  font-size: max(0.8rem, 0.625rem);
   text-align: center;
 }
 
@@ -1728,12 +2304,12 @@ h1 em {
 
 .player-points small {
   color: #868577;
-  font-size: 7px;
+  font-size: max(0.8rem, 0.4375rem);
 }
 
 .scoring-label {
   color: #9d947f;
-  font-size: 8px;
+  font-size: max(0.8rem, 0.5rem);
   letter-spacing: 0.1em;
 }
 
@@ -1760,7 +2336,7 @@ h1 em {
   border: 1px solid rgba(214, 183, 119, 0.38);
   border-radius: 3px;
   background: transparent;
-  font-size: 7px;
+  font-size: max(0.8rem, 0.4375rem);
   font-weight: 700;
   letter-spacing: 0.1em;
   cursor: pointer;
@@ -1806,21 +2382,21 @@ h1 em {
 
 .action-card .eyebrow {
   margin-bottom: 7px;
-  font-size: 8px;
+  font-size: max(0.8rem, 0.5rem);
 }
 
 .action-card h3 {
   margin: 0 0 6px;
   color: #eee3ce;
   font-family: Georgia, 'Times New Roman', serif;
-  font-size: 18px;
+  font-size: 1.125rem;
   font-weight: 400;
 }
 
 .action-card > p:not(.eyebrow) {
   margin: 0 0 12px;
   color: #9c9e8f;
-  font-size: 9px;
+  font-size: max(0.8rem, 0.5625rem);
   line-height: 1.5;
 }
 
@@ -1828,7 +2404,7 @@ h1 em {
   width: 100%;
   min-height: 37px;
   margin-top: 5px;
-  font-size: 8px;
+  font-size: max(0.8rem, 0.5rem);
 }
 
 .guess-options {
@@ -1848,7 +2424,7 @@ h1 em {
   border: 1px solid rgba(214, 183, 119, 0.23);
   border-radius: 4px;
   background: rgba(214, 183, 119, 0.06);
-  font-size: 9px;
+  font-size: max(0.8rem, 0.5625rem);
   cursor: pointer;
   transition: background 150ms ease, border-color 150ms ease;
 }
@@ -1861,7 +2437,7 @@ h1 em {
 .guess-option .row-avatar {
   width: 24px;
   height: 24px;
-  font-size: 10px;
+  font-size: max(0.8rem, 0.625rem);
 }
 
 .guess-option svg {
@@ -1922,4 +2498,833 @@ h1 em {
   .rank-number {
     width: 10px;
   }
+}
+
+h1,
+.round-chip strong,
+.panel-title h2,
+.rank-number,
+.action-card h3,
+.step-number,
+.step-copy h3,
+.curtain-card h2 {
+  font-family: var(--font-display);
+}
+
+.speech-bubble {
+  max-width: min(180px, calc(100vw - 32px));
+  font-size: 0.875rem;
+  font-family: var(--font-body);
+}
+
+.primary-button,
+.action-card .primary-button {
+  min-height: 48px;
+  font-size: 1rem;
+}
+
+.setting-choice {
+  min-height: 44px;
+  font-size: 0.875rem;
+}
+
+.text-input {
+  min-height: 44px;
+  font-size: 0.9375rem;
+}
+
+.mobile-score-toggle {
+  display: none;
+}
+
+.topbar-round {
+  display: none;
+}
+
+.typography-preview {
+  font-family: var(--font-body);
+}
+
+:root[data-font-style="contrast"] .game-shell {
+  font-weight: 600;
+  text-shadow: 0 1px rgba(0, 0, 0, 0.3);
+}
+
+:root[data-font-style="playful"] .game-shell h1,
+:root[data-font-style="playful"] .game-shell h2,
+:root[data-font-style="playful"] .game-shell h3 {
+  letter-spacing: 0;
+}
+
+@media (max-width: 520px) {
+  .game-shell.has-action-dock .topbar {
+    position: sticky;
+    z-index: 10;
+    top: 0;
+    background: rgba(20, 29, 25, 0.96);
+    backdrop-filter: blur(12px);
+  }
+
+  .game-shell.has-action-dock .restart-button {
+    display: none;
+  }
+
+  .mobile-score-toggle {
+    display: grid;
+  }
+
+  .game-shell.has-action-dock .side-panel {
+    min-height: 0;
+    padding: 0;
+    overflow: visible;
+    border: 0;
+    background: transparent;
+  }
+
+  .game-shell.has-action-dock .side-panel > .panel-title,
+  .game-shell.has-action-dock .side-panel > .player-list,
+  .game-shell.has-action-dock .side-panel > .privacy-note {
+    display: none;
+  }
+
+  .game-shell.has-action-dock.mobile-scoreboard-open .side-panel > .panel-title {
+    display: flex;
+    margin-bottom: 8px;
+    padding: 12px;
+    border: 1px solid rgba(228, 213, 181, 0.15);
+    border-radius: 8px;
+    background: rgba(26, 34, 29, 0.96);
+  }
+
+  .game-shell.has-action-dock.mobile-scoreboard-open .side-panel > .player-list {
+    display: flex;
+    margin-bottom: 12px;
+    padding: 4px 12px;
+    border: 1px solid rgba(228, 213, 181, 0.15);
+    border-radius: 8px;
+    background: rgba(26, 34, 29, 0.96);
+  }
+
+  .game-shell.has-action-dock.mobile-scoreboard-open .side-panel {
+    padding-bottom: 180px;
+  }
+
+  .mobile-score-toggle.selected {
+    color: #e6ca8c;
+    border-color: rgba(228, 213, 181, 0.4);
+    background: rgba(228, 213, 181, 0.08);
+  }
+
+  .game-shell.has-action-dock .action-message {
+    position: fixed;
+    z-index: 15;
+    right: 0;
+    bottom: max(8px, env(safe-area-inset-bottom));
+    left: 0;
+    width: min(250px, calc(100vw - 126px));
+    max-height: 34dvh;
+    margin-inline: auto;
+    overflow-y: auto;
+    transform: none;
+    border: 1px solid rgba(222, 194, 137, 0.38);
+    border-radius: 12px;
+    background: rgba(18, 27, 22, 0.95);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(14px);
+  }
+
+  .game-shell.has-action-dock .action-card {
+    min-height: 0;
+    margin: 0;
+    padding: 10px 11px;
+    border: 0;
+    background: transparent;
+  }
+
+  .game-shell.has-action-dock .action-card .eyebrow {
+    margin-bottom: 5px;
+    font-size: 0.8rem;
+  }
+
+  .game-shell.has-action-dock .action-card h3 {
+    margin-bottom: 4px;
+    font-size: 1rem;
+  }
+
+  .game-shell.has-action-dock .action-card > p:not(.eyebrow) {
+    margin-bottom: 8px;
+    font-size: 0.875rem;
+  }
+
+  .game-shell.has-action-dock .action-card .primary-button {
+    min-height: 44px;
+    margin-top: 4px;
+    font-size: 0.9375rem;
+  }
+
+  .game-shell.has-action-dock .guess-options {
+    gap: 5px;
+  }
+
+  .game-shell.has-action-dock .guess-option {
+    min-height: 44px;
+    font-size: 0.875rem;
+  }
+
+  .game-shell.has-action-dock .emote-wrapper {
+    position: fixed;
+    z-index: 16;
+    right: max(12px, env(safe-area-inset-right));
+    bottom: max(10px, env(safe-area-inset-bottom));
+  }
+
+  .game-shell.has-action-dock .emote-wheel {
+    bottom: 52px;
+  }
+
+  .game-shell {
+    width: 100%;
+    padding-right: max(12px, env(safe-area-inset-right));
+    padding-left: max(12px, env(safe-area-inset-left));
+  }
+
+  .player-seat {
+    max-width: min(110px, 32vw);
+    min-width: 0;
+  }
+
+  .seat-label-group {
+    min-width: 0;
+    max-width: 76px;
+  }
+
+  .seat-name,
+  .seat-role {
+    max-width: 76px;
+    overflow: hidden;
+    font-size: 0.8rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .seat-avatar {
+    width: 28px;
+    height: 28px;
+    font-size: 0.875rem;
+  }
+
+  .icon-button,
+  .chat-icon-button,
+  .chat-input-row button,
+  .emote-trigger,
+  .color-swatch,
+  .chat-quick-chips button,
+  .guess-button,
+  .guess-option,
+  .emote-wheel button {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .color-swatch {
+    width: 44px;
+    height: 44px;
+    border-width: 9px;
+    background-clip: content-box;
+  }
+
+  .chat-icon-button,
+  .chat-input-row button,
+  .emote-trigger {
+    width: 44px;
+  }
+
+  .chat-toggle {
+    width: 48px;
+    height: 48px;
+  }
+
+  .modal-backdrop {
+    align-items: flex-end;
+    padding: 0;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .settings-modal,
+  .guide-modal {
+    width: 100%;
+    max-height: 82dvh;
+    border-radius: 20px 20px 0 0;
+  }
+
+  .settings-content {
+    min-height: 0;
+    padding-bottom: 16px;
+  }
+
+  .settings-modal .modal-heading,
+  .guide-modal .modal-heading {
+    position: sticky;
+    z-index: 1;
+    top: 0;
+    background: rgba(28, 39, 32, 0.98);
+  }
+
+  .settings-modal .modal-footer {
+    position: sticky;
+    z-index: 1;
+    bottom: 0;
+    padding-bottom: max(13px, env(safe-area-inset-bottom));
+    background: rgba(22, 32, 27, 0.98);
+  }
+
+  .guide-modal {
+    padding-bottom: max(16px, env(safe-area-inset-bottom));
+    overflow-y: auto;
+  }
+
+  .guide-steps {
+    max-height: none;
+    overflow: visible;
+  }
+
+  .chat-drawer {
+    bottom: max(12px, env(safe-area-inset-bottom));
+    left: max(12px, env(safe-area-inset-left));
+  }
+
+  .chat-panel {
+    position: fixed;
+    z-index: 21;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: min(72dvh, 600px);
+    max-height: 82dvh;
+    min-height: 280px;
+    border-right: 0;
+    border-bottom: 0;
+    border-left: 0;
+    border-radius: 20px 20px 0 0;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .chat-drawer.is-open .chat-toggle {
+    visibility: hidden;
+    pointer-events: none;
+  }
+
+  .chat-title,
+  .chat-title strong {
+    font-size: 0.9375rem;
+  }
+
+  .chat-message-meta strong,
+  .chat-message-meta time,
+  .chat-message-body p,
+  .chat-empty,
+  .chat-quick-label,
+  .chat-quick-chips button,
+  .chat-input-row input {
+    font-size: 0.875rem;
+  }
+
+  .chat-input-row input {
+    min-height: 44px;
+  }
+
+  .speech-bubble {
+    max-width: min(160px, calc(100vw - 40px));
+    font-size: 0.875rem;
+  }
+
+  .font-scale-options {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .action-card h3 {
+    font-size: 1.25rem;
+  }
+
+  .action-card > p:not(.eyebrow),
+  .step-copy p,
+  .guide-intro {
+    font-size: 0.875rem;
+    line-height: 1.5;
+  }
+}
+
+@media (max-width: 520px) and (orientation: landscape) {
+  .game-shell.has-action-dock .action-message {
+    max-height: 40dvh;
+  }
+
+  .settings-modal,
+  .guide-modal {
+    max-height: 90dvh;
+  }
+
+  .chat-panel {
+    height: 82dvh;
+    max-height: 90dvh;
+  }
+}
+
+@media (max-width: 380px) {
+  .game-shell.has-action-dock .topbar-round > span:first-child {
+    display: none;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 520px) and (max-width: 900px) {
+  .game-shell {
+    width: calc(100% - 24px);
+  }
+
+  .topbar {
+    min-height: 56px;
+    height: auto;
+  }
+
+  .topbar-meta {
+    display: none;
+  }
+
+  .topbar-round {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: auto;
+    color: #b7ad99;
+    font-size: 0.8rem;
+  }
+
+  .topbar-round strong {
+    color: #eee3ce;
+    font-size: 0.9375rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .topbar-round b {
+    padding: 3px 7px;
+    color: #e6ca8c;
+    border: 1px solid rgba(214, 183, 119, 0.4);
+    border-radius: 999px;
+    font-size: 0.8rem;
+  }
+
+  .intro-row {
+    display: none;
+  }
+
+  .arena-heading {
+    height: 38px;
+  }
+
+  .arena {
+    height: min(55dvh, 230px);
+    min-height: 180px;
+  }
+
+  .game-shell.has-action-dock .topbar {
+    position: sticky;
+    z-index: 10;
+    top: 0;
+    background: rgba(20, 29, 25, 0.96);
+    backdrop-filter: blur(12px);
+  }
+
+  .game-shell.has-action-dock .restart-button {
+    display: none;
+  }
+
+  .mobile-score-toggle {
+    display: grid;
+  }
+
+  .game-shell.has-action-dock .side-panel {
+    min-height: 0;
+    padding: 0;
+    overflow: visible;
+    border: 0;
+    background: transparent;
+  }
+
+  .game-shell.has-action-dock .side-panel > .panel-title,
+  .game-shell.has-action-dock .side-panel > .player-list,
+  .game-shell.has-action-dock .side-panel > .privacy-note {
+    display: none;
+  }
+
+  .game-shell.has-action-dock.mobile-scoreboard-open .side-panel > .panel-title {
+    display: flex;
+  }
+
+  .game-shell.has-action-dock.mobile-scoreboard-open .side-panel > .player-list {
+    display: flex;
+  }
+
+  .game-shell.has-action-dock .action-message {
+    position: fixed;
+    z-index: 15;
+    right: 0;
+    bottom: max(8px, env(safe-area-inset-bottom));
+    left: 0;
+    width: min(250px, calc(100vw - 126px));
+    max-height: 30dvh;
+    margin-inline: auto;
+    overflow-y: auto;
+    transform: none;
+    border: 1px solid rgba(222, 194, 137, 0.38);
+    border-radius: 12px;
+    background: rgba(18, 27, 22, 0.95);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(14px);
+  }
+
+  .game-shell.has-action-dock .action-card {
+    min-height: 0;
+    margin: 0;
+    padding: 8px 10px;
+    border: 0;
+    background: transparent;
+  }
+
+  .game-shell.has-action-dock .action-card .primary-button,
+  .game-shell.has-action-dock .guess-option {
+    min-height: 44px;
+  }
+
+  .game-shell.has-action-dock .action-card > p:not(.eyebrow) {
+    display: none;
+  }
+
+  .game-shell.has-action-dock .action-card .eyebrow {
+    display: none;
+  }
+
+  .game-shell.has-action-dock .arena-status {
+    display: none;
+  }
+
+  .game-shell p:not(.eyebrow) {
+    font-size: max(0.875rem, 1em);
+  }
+
+  .game-shell.has-action-dock .emote-wrapper {
+    position: fixed;
+    z-index: 16;
+    right: max(12px, env(safe-area-inset-right));
+    bottom: max(10px, env(safe-area-inset-bottom));
+  }
+
+  .icon-button,
+  .chat-icon-button,
+  .chat-input-row button,
+  .emote-trigger,
+  .color-swatch,
+  .chat-quick-chips button,
+  .guess-button,
+  .guess-option,
+  .emote-wheel button {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .modal-backdrop {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .settings-modal,
+  .guide-modal {
+    width: min(640px, 100%);
+    max-height: 90dvh;
+    border-radius: 18px 18px 0 0;
+  }
+
+  .chat-panel {
+    position: fixed;
+    z-index: 21;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    width: min(480px, calc(100vw - 24px));
+    height: 82dvh;
+    max-height: 90dvh;
+    margin-inline: auto;
+    border-radius: 18px 18px 0 0;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .chat-drawer.is-open .chat-toggle {
+    visibility: hidden;
+    pointer-events: none;
+  }
+}
+
+@media (max-width: 520px), (orientation: landscape) and (max-height: 520px) and (max-width: 900px) {
+  .table-caption,
+  .arena-status {
+    display: none;
+  }
+}
+
+@media (max-width: 520px), (orientation: landscape) and (max-height: 520px) and (max-width: 900px) {
+  .game-shell .footer-line {
+    display: none;
+  }
+
+  .game-shell:not(.has-action-dock) .intro-row {
+    gap: 0;
+    padding: 8px 0 10px;
+  }
+
+  .game-shell:not(.has-action-dock) .intro-row .eyebrow,
+  .game-shell:not(.has-action-dock) .intro-copy,
+  .game-shell:not(.has-action-dock) .round-chip {
+    display: none;
+  }
+
+  .game-shell:not(.has-action-dock) h1 {
+    margin: 0;
+    font-size: clamp(1.4rem, 7vw, 1.8rem);
+  }
+
+  .game-shell:not(.has-action-dock) .player-count-picker {
+    width: 100%;
+    margin-bottom: 8px;
+  }
+
+  .game-shell:not(.has-action-dock) .game-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .game-shell:not(.has-action-dock) .side-panel > .panel-title,
+  .game-shell:not(.has-action-dock) .side-panel > .player-list,
+  .game-shell:not(.has-action-dock) .side-panel > .privacy-note,
+  .game-shell:not(.has-action-dock) .lobby-setup > .eyebrow,
+  .game-shell:not(.has-action-dock) .mode-description {
+    display: none;
+  }
+
+  .game-shell:not(.has-action-dock) .local-player-fields .privacy-caption {
+    display: none;
+  }
+
+  .game-shell:not(.has-action-dock) .side-panel {
+    order: -1;
+    min-height: 0;
+    padding: 4px 0 8px;
+    border: 0;
+    background: transparent;
+  }
+
+  .game-shell:not(.has-action-dock) .lobby-setup {
+    gap: 8px;
+    padding: 0;
+  }
+
+  .game-shell:not(.has-action-dock) .mode-card {
+    min-height: 48px;
+    font-size: 0.875rem;
+  }
+
+  .game-shell:not(.has-action-dock) .arena-card {
+    margin-top: 8px;
+  }
+
+  .game-shell:not(.has-action-dock) .arena-heading {
+    height: 34px;
+  }
+
+  .game-shell:not(.has-action-dock) .scene-label {
+    display: none;
+  }
+
+  .game-shell:not(.has-action-dock) .arena {
+    height: min(40dvh, 260px);
+    min-height: 180px;
+  }
+
+  .game-shell:not(.has-action-dock) .lobby-start {
+    width: min(100%, 240px);
+    align-self: center;
+    min-height: 44px;
+    margin-top: 0;
+    padding-inline: 16px;
+    font-size: 0.9375rem;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 520px) and (max-width: 900px) {
+  .game-shell:not(.has-action-dock) .arena-card {
+    display: block;
+  }
+
+  .game-shell:not(.has-action-dock) .topbar {
+    min-height: 48px;
+    height: 48px;
+  }
+
+  .game-shell:not(.has-action-dock) .intro-row {
+    display: none;
+  }
+
+  .game-shell:not(.has-action-dock) .player-count-picker {
+    grid-template-columns: auto minmax(0, 1fr);
+    width: 100%;
+    margin: 4px 0;
+  }
+
+  .game-shell:not(.has-action-dock) .side-panel {
+    min-height: 0;
+    padding: 2px 0 4px;
+  }
+
+  .game-shell:not(.has-action-dock) .lobby-setup {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 220px;
+    gap: 6px;
+    padding: 0;
+  }
+
+  .game-shell:not(.has-action-dock) .mode-tabs {
+    gap: 4px;
+  }
+
+  .game-shell:not(.has-action-dock) .mode-card {
+    min-height: 44px;
+    gap: 2px;
+    font-size: 0.8rem;
+  }
+
+  .game-shell:not(.has-action-dock) .lobby-start {
+    grid-column: 2;
+    width: 100%;
+    min-height: 44px;
+    margin: 0;
+    padding-inline: 8px;
+    font-size: 0.875rem;
+  }
+
+  .game-shell:not(.has-action-dock) .arena-card {
+    margin-top: 4px;
+  }
+
+  .game-shell:not(.has-action-dock) .arena-heading {
+    height: 30px;
+  }
+
+  .game-shell:not(.has-action-dock) .arena {
+    height: min(48dvh, 200px);
+    min-height: 160px;
+  }
+
+  .player-seat {
+    max-width: 76px;
+    padding: 2px 5px;
+  }
+
+  .seat-avatar {
+    display: none;
+  }
+}
+
+@media (min-width: 861px) and (max-height: 640px) {
+  .topbar {
+    height: 56px;
+  }
+
+  .intro-row {
+    padding: 10px 0 8px;
+  }
+
+  .player-count-picker {
+    margin-bottom: 8px;
+  }
+
+  .arena-heading {
+    height: 36px;
+  }
+
+  .arena {
+    height: clamp(280px, 52dvh, 310px);
+  }
+}
+
+.player-seat {
+  position: relative;
+  min-width: 0;
+  max-width: 120px;
+  gap: 4px;
+  padding: 3px 6px 3px 3px;
+  border-radius: 999px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.28);
+}
+
+.seat-avatar {
+  width: 20px;
+  height: 20px;
+  font-size: 0.75rem;
+}
+
+.seat-label-group {
+  max-width: 84px;
+  gap: 1px;
+  line-height: 1.15;
+}
+
+.seat-name,
+.seat-role {
+  max-width: 84px;
+  overflow: hidden;
+  font-size: 0.8rem;
+  line-height: 1.15;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.seat-role {
+  letter-spacing: 0.06em;
+}
+
+@media (max-width: 520px) {
+  .player-seat {
+    max-width: min(100px, 28vw);
+    gap: 3px;
+    padding: 2px 5px 2px 2px;
+  }
+
+  .seat-avatar {
+    width: 18px;
+    height: 18px;
+  }
+
+  .seat-label-group,
+  .seat-name,
+  .seat-role {
+    max-width: 72px;
+  }
+}
+
+.seat-overlay-layer {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.player-seat-anchor {
+  position: absolute;
+  top: 0;
+  left: 0;
+  will-change: transform;
+}
+
+.phase-lobby .table-caption {
+  display: none;
 }

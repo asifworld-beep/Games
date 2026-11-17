@@ -4,6 +4,18 @@ import { CRESTS, THEMES } from '../config/themes.js'
 import { LANGUAGES, getDirection, translate } from '../i18n/translations.js'
 
 const COLORS = ['#e8b85b', '#d78162', '#739b88', '#8b81bc', '#82a8ca', '#d48ba0']
+const FONT_SCALES = [
+  { value: 0.9, label: 'Compact' },
+  { value: 1, label: 'Standard' },
+  { value: 1.15, label: 'Large' },
+  { value: 1.3, label: 'Extra large' },
+]
+const FONT_STYLES = [
+  { value: 'royal', label: 'Royal Heritage' },
+  { value: 'modern', label: 'Modern Clean' },
+  { value: 'playful', label: 'Playful Storyteller' },
+  { value: 'contrast', label: 'High-Contrast Bold' },
+]
 
 function Choice({ selected, children, onClick }) {
   return (
@@ -79,6 +91,51 @@ export default function SettingsModal({ open, onClose, settings, updateSetting }
                 <select className="text-input language-select" aria-label={t('language')} value={settings.language} onChange={(event) => updateSetting('language', event.target.value)}>
                   {LANGUAGES.map(({ id, name }) => <option value={id} key={id}>{name}</option>)}
                 </select>
+              </section>
+
+              <section className="setting-section typography-section">
+                <h3>Typography &amp; Readability</h3>
+                <span className="field-label">Font size</span>
+                <div className="font-scale-options" role="group" aria-label="Font size preset">
+                  {FONT_SCALES.map(({ value, label }) => (
+                    <button
+                      className={`setting-choice${settings.fontScale === value ? ' selected' : ''}`}
+                      type="button"
+                      key={value}
+                      aria-pressed={settings.fontScale === value}
+                      onClick={() => updateSetting('fontScale', value)}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+                <label className="field-label" htmlFor="font-scale">
+                  Custom size <span>{Math.round((settings.fontScale ?? 1) * 100)}%</span>
+                </label>
+                <input
+                  id="font-scale"
+                  className="range-input"
+                  type="range"
+                  min="0.9"
+                  max="1.3"
+                  step="0.01"
+                  value={settings.fontScale ?? 1}
+                  aria-label="Custom font size"
+                  onChange={(event) => updateSetting('fontScale', Number(event.target.value))}
+                />
+                <span className="field-label">Font style</span>
+                <div className="choice-stack">
+                  {FONT_STYLES.map(({ value, label }) => (
+                    <Choice
+                      key={value}
+                      selected={(settings.fontStyle ?? 'royal') === value}
+                      onClick={() => updateSetting('fontStyle', value)}
+                    >
+                      {label}
+                    </Choice>
+                  ))}
+                </div>
+                <p className="typography-preview" aria-live="polite">A clear view of the royal court — राजा मंत्री चोर सिपाही</p>
               </section>
 
               <section className="setting-section">

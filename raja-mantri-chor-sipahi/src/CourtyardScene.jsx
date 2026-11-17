@@ -2,12 +2,13 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
 import { Html } from '@react-three/drei'
 import { Bloom, EffectComposer, Vignette } from '@react-three/postprocessing'
-import { CanvasTexture, Color, MathUtils, SRGBColorSpace, Vector3 } from 'three'
+import { CanvasTexture, Color, MathUtils, Object3D, SRGBColorSpace, Vector3 } from 'three'
 import PlayerTotem from './components/PlayerTotem.jsx'
 import { THEMES } from './config/themes.js'
 
 const ROLE_COLORS = {
   raja: '#d8b970',
+  rani: '#d99b9d',
   mantri: '#86a58c',
   chor: '#cf8063',
   sipahi: '#8e88ba',
@@ -19,24 +20,40 @@ const CAMERA_POSES = {
   mira: { position: new Vector3(-11.2, 7.2, 0), target: new Vector3(0.35, 0.5, 0) },
   kabir: { position: new Vector3(0, 7.2, -11.2), target: new Vector3(0, 0.5, 0.35) },
   asha: { position: new Vector3(11.2, 7.2, 0), target: new Vector3(-0.35, 0.5, 0) },
+  northeast: { position: new Vector3(8.2, 7.2, -8.2), target: new Vector3(-0.45, 0.5, 0.45) },
+  southeast: { position: new Vector3(8.2, 7.2, 8.2), target: new Vector3(-0.45, 0.5, -0.45) },
+  southwest: { position: new Vector3(-8.2, 7.2, 8.2), target: new Vector3(0.45, 0.5, -0.45) },
+  northwest: { position: new Vector3(-8.2, 7.2, -8.2), target: new Vector3(0.45, 0.5, 0.45) },
 }
 const SEAT_POSES = {
   south: CAMERA_POSES.you,
   west: CAMERA_POSES.mira,
   north: CAMERA_POSES.kabir,
   east: CAMERA_POSES.asha,
+  northeast: CAMERA_POSES.northeast,
+  southeast: CAMERA_POSES.southeast,
+  southwest: CAMERA_POSES.southwest,
+  northwest: CAMERA_POSES.northwest,
 }
 const SEAT_POSITIONS = {
   south: [0, 0, 2.7],
   west: [-2.8, 0, 0],
   north: [0, 0, -2.7],
   east: [2.8, 0, 0],
+  northeast: [2.99, 0, -0.97],
+  southeast: [1.85, 0, 2.55],
+  southwest: [-1.85, 0, 2.55],
+  northwest: [-2.99, 0, -0.97],
 }
 const CHIT_POSES = {
   south: { position: [0, 0.94, 1.94], yaw: 0 },
   west: { position: [-1.94, 0.94, 0], yaw: Math.PI / 2 },
   north: { position: [0, 0.94, -1.94], yaw: Math.PI },
   east: { position: [1.94, 0.94, 0], yaw: -Math.PI / 2 },
+  northeast: { position: [1.85, 0.94, -0.6], yaw: -Math.PI * 0.7 },
+  southeast: { position: [1.15, 0.94, 1.56], yaw: -Math.PI * 0.3 },
+  southwest: { position: [-1.15, 0.94, 1.56], yaw: Math.PI * 0.3 },
+  northwest: { position: [-1.85, 0.94, -0.6], yaw: Math.PI * 0.7 },
 }
 const UP = new Vector3(0, 1, 0)
 
@@ -56,7 +73,7 @@ const DUST_POSITIONS = new Float32Array(
   }).flat(),
 )
 
-function Chit({ role, roleLabel, revealed, index, seat, shuffleActive, interactive = false, onClick }) {
+function Chit({ role, roleLabel, fontFamily, fontsReady, revealed, index, seat, shuffleActive, interactive = false, onClick }) {
   const group = useRef(null)
   const color = useMemo(() => new Color(ROLE_COLORS[role] ?? '#655338'), [role])
   const labelTexture = useMemo(() => {
@@ -68,14 +85,14 @@ function Chit({ role, roleLabel, revealed, index, seat, shuffleActive, interacti
     if (!context) return null
     context.clearRect(0, 0, canvas.width, canvas.height)
     context.fillStyle = '#4c3824'
-    context.font = 'bold 68px system-ui, sans-serif'
+    context.font = `bold 68px ${fontsReady ? fontFamily : 'system-ui, sans-serif'}`
     context.textAlign = 'center'
     context.textBaseline = 'middle'
     context.fillText(roleLabel, canvas.width / 2, canvas.height / 2)
     const texture = new CanvasTexture(canvas)
     texture.colorSpace = SRGBColorSpace
     return texture
-  }, [revealed, roleLabel])
+  }, [fontFamily, fontsReady, revealed, roleLabel])
   const pose = CHIT_POSES[seat] ?? CHIT_POSES.south
 
   useEffect(() => () => labelTexture?.dispose(), [labelTexture])
@@ -151,27 +168,72 @@ function Chit({ role, roleLabel, revealed, index, seat, shuffleActive, interacti
   )
 }
 
-function CameraTransition({ phase, focusSeat, cue }) {
+function CameraTransition({ phase, focusSeat, cue, playerCount }) {
   const punch = useRef(0)
   const previousCue = useRef('')
+  const responsivePosition = useRef(new Vector3())
+  const responsiveTarget = useRef(new Vector3())
 
   useEffect(() => {
     if (cue && cue !== previousCue.current) punch.current = 1
     previousCue.current = cue
   }, [cue])
 
-  useFrame(({ camera, clock }, delta) => {
-    const shouldFocus = ['reveal-king', 'reveal-minister', 'guess'].includes(phase)
+  useFrame(({ camera, clock, size }, delta) => {
+    const position = responsivePosition.current
+    const target = responsiveTarget.current
+    const shouldFocus = ['reveal-king', 'reveal-rani', 'reveal-sipahi', 'chant', 'guess'].includes(phase)
     const pose = shouldFocus && focusSeat
       ? SEAT_POSES[focusSeat] ?? CAMERA_POSES.overview
       : CAMERA_POSES.overview
-    camera.position.lerp(pose.position, 1 - Math.exp(-delta * 1.65))
-    if (punch.current > 0.001) camera.position.lerp(pose.target, punch.current * 0.075)
+    target.copy(pose.target)
+    position.copy(pose.position)
+    const aspect = size.width / size.height
+    const narrowArena = aspect < 0.8
+    const wideArena = aspect > 2.4
+    const distanceScale = (playerCount === 5 ? 1.08 : 1)
+      * (narrowArena ? 1.08 : 1)
+      * (wideArena ? 0.85 : 1)
+    position.sub(pose.target).multiplyScalar(distanceScale).add(pose.target)
+    if (narrowArena) {
+      target.y += 0.28
+    }
+    camera.position.lerp(position, 1 - Math.exp(-delta * 1.65))
+    if (punch.current > 0.001) camera.position.lerp(target, punch.current * 0.075)
     camera.position.x += Math.sin(clock.elapsedTime * 42) * punch.current * 0.018
     camera.position.y += Math.cos(clock.elapsedTime * 36) * punch.current * 0.012
     punch.current = MathUtils.damp(punch.current, 0, 4.5, delta)
-    camera.lookAt(pose.target)
+    camera.lookAt(target)
   })
+  return null
+}
+
+function SeatAnchorProjector({ players, seatAnchorRefs, phase, rolesByPlayer, revealedPlayers, rankByPlayer }) {
+  const position = useMemo(() => new Vector3(), [])
+
+  useFrame(({ camera, size }) => {
+    if (!size.width || !size.height) return
+    players.forEach((player) => {
+      const anchor = seatAnchorRefs.current.get(player.id)
+      if (!anchor) return
+      const seatPosition = SEAT_POSITIONS[player.seat] ?? SEAT_POSITIONS.south
+      const publicRole = phase === 'result' || revealedPlayers.includes(player.id)
+        ? rolesByPlayer[player.id]
+        : null
+      const elevation = (phase === 'result' ? rankElevation(rankByPlayer[player.id]) : 0)
+        + (publicRole === 'raja' ? 0.45 : 0)
+        + (publicRole === 'rani' ? 0.28 : 0)
+      position.set(seatPosition[0], 2.02 + elevation, seatPosition[2]).project(camera)
+      const x = (position.x + 1) * 0.5 * size.width
+      const y = (1 - position.y) * 0.5 * size.height
+      const visible = position.z >= -1 && position.z <= 1
+        && Math.abs(position.x) <= 1.12
+        && Math.abs(position.y) <= 1.12
+      anchor.style.visibility = visible ? 'visible' : 'hidden'
+      anchor.style.transform = `translate3d(${x}px, ${y}px, 0) translate(-50%, -50%)`
+    })
+  })
+
   return null
 }
 
@@ -199,6 +261,24 @@ function InspectBeam({ from, to }) {
       <cylinderGeometry args={[0.018, 0.018, 1, 8]} />
       <meshBasicMaterial color="#ffd47a" transparent opacity={0.46} depthWrite={false} />
     </mesh>
+  )
+}
+
+function RoyalSpotlight({ from, to }) {
+  const target = useMemo(() => new Object3D(), [])
+  return (
+    <>
+      <primitive object={target} position={[to[0], 1.2, to[2]]} />
+      <spotLight
+        position={[from[0], 2.8, from[2]]}
+        target={target}
+        color="#ffd878"
+        angle={0.28}
+        penumbra={0.7}
+        distance={9}
+        intensity={11}
+      />
+    </>
   )
 }
 
@@ -366,9 +446,13 @@ function Courtyard({ theme, quality }) {
 
 export default function CourtyardScene({
   phase,
+  fontFamily = 'system-ui, sans-serif',
+  fontsReady = false,
   roundNumber = 0,
   focusPlayerId,
   players,
+  seatAnchorRefs,
+  playerCount = players.length,
   rolesByPlayer,
   revealedPlayers,
   shuffleActive,
@@ -388,19 +472,19 @@ export default function CourtyardScene({
 }) {
   const theme = THEMES[themeId] ?? THEMES.sandstone
   const [hoveredPlayerId, setHoveredPlayerId] = useState(null)
-  const kingPlayer = players.find(({ id }) => rolesByPlayer[id] === 'raja')
-  const kingRevealed = kingPlayer && (phase === 'result' || revealedPlayers.includes(kingPlayer.id))
-  const cameraCue = phase === 'result' && guessWasCorrect
-    ? `caught-${roundNumber}`
-    : kingRevealed ? `king-${roundNumber}` : ''
-  const mantriPlayer = players.find(({ id }) => rolesByPlayer[id] === 'mantri')
+  const cameraCue = phase === 'result'
+    ? `result-${roundNumber}-${guessWasCorrect}`
+    : ['reveal-king', 'reveal-rani', 'reveal-sipahi', 'chant'].includes(phase) ? `${phase}-${roundNumber}` : ''
+  const rajaPlayer = players.find(({ id }) => rolesByPlayer[id] === 'raja')
+  const sipahiPlayer = players.find(({ id }) => rolesByPlayer[id] === 'sipahi')
   const hoveredPlayer = players.find(({ id }) => id === hoveredPlayerId)
+  const rajaPosition = rajaPlayer ? SEAT_POSITIONS[rajaPlayer.seat] : null
   const steal = phase === 'result' && !guessWasCorrect
   const chorPlayer = players.find(({ id }) => rolesByPlayer[id] === 'chor')
-  const mantriPosition = mantriPlayer ? SEAT_POSITIONS[mantriPlayer.seat] : null
+  const sipahiPosition = sipahiPlayer ? SEAT_POSITIONS[sipahiPlayer.seat] : null
   const chorPosition = chorPlayer ? SEAT_POSITIONS[chorPlayer.seat] : null
-  const coinStart = mantriPosition
-    ? [mantriPosition[0], 1.3 + rankElevation(rankByPlayer[mantriPlayer.id]), mantriPosition[2]]
+  const coinStart = sipahiPosition
+    ? [sipahiPosition[0], 1.3 + rankElevation(rankByPlayer[sipahiPlayer.id]), sipahiPosition[2]]
     : [0, 1, 0]
   const coinEnd = chorPosition
     ? [chorPosition[0], 1.4 + rankElevation(rankByPlayer[chorPlayer.id]), chorPosition[2]]
@@ -417,6 +501,15 @@ export default function CourtyardScene({
         phase={phase}
         focusSeat={players.find(({ id }) => id === focusPlayerId)?.seat}
         cue={cameraCue}
+        playerCount={playerCount}
+      />
+      <SeatAnchorProjector
+        players={players}
+        seatAnchorRefs={seatAnchorRefs}
+        phase={phase}
+        rolesByPlayer={rolesByPlayer}
+        revealedPlayers={revealedPlayers}
+        rankByPlayer={rankByPlayer}
       />
       <Courtyard theme={theme} quality={quality} />
       {players.map((player) => {
@@ -427,15 +520,17 @@ export default function CourtyardScene({
         const rank = rankByPlayer[player.id]
         const rankLift = phase === 'result' ? rankElevation(rank) : 0
         const kingLift = role === 'raja' && publiclyRevealed ? 0.45 : 0
-        const elevation = rankLift + kingLift
+        const queenLift = role === 'rani' && publiclyRevealed ? 0.28 : 0
+        const elevation = rankLift + kingLift + queenLift
         const bubble = speechBubbles.find(({ playerId }) => playerId === player.id)
         const outcome = phase === 'result' && role === 'chor'
           ? guessWasCorrect ? 'caught' : 'escaped'
-          : phase === 'result' && role === 'mantri' && !guessWasCorrect ? 'escaped' : null
+          : null
         const interactive = canGuess && guessablePlayerIds.includes(player.id)
         return (
           <group key={player.id} position={seatPosition}>
             <PlayerTotem
+              key={`${player.id}-${roundNumber}`}
               position={[0, 0, 0]}
               color={player.color}
               height={height}
@@ -465,6 +560,8 @@ export default function CourtyardScene({
             key={player.id}
             role={revealed ? role : null}
             roleLabel={revealed ? roleLabels[role] : null}
+            fontFamily={fontFamily}
+            fontsReady={fontsReady}
             revealed={revealed}
             index={index}
             seat={player.seat}
@@ -474,10 +571,16 @@ export default function CourtyardScene({
           />
         )
       })}
-      {phase === 'guess' && mantriPosition && hoveredPlayer && (
+      {phase === 'guess' && sipahiPosition && hoveredPlayer && (
         <InspectBeam
-          from={[mantriPosition[0], 1.65, mantriPosition[2]]}
+          from={[sipahiPosition[0], 1.65, sipahiPosition[2]]}
           to={[SEAT_POSITIONS[hoveredPlayer.seat][0], 1.2, SEAT_POSITIONS[hoveredPlayer.seat][2]]}
+        />
+      )}
+      {phase === 'chant' && rajaPosition && sipahiPosition && (
+        <RoyalSpotlight
+          from={rajaPosition}
+          to={[sipahiPosition[0], 1.2, sipahiPosition[2]]}
         />
       )}
       <CoinTransfer active={steal} from={coinStart} to={coinEnd} />

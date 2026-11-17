@@ -32,6 +32,7 @@ export class SoundEngine {
       'king-call': { notes: [392, 523.25, 659.25, 392, 261.63], type: 'triangle', spacing: 0.085, duration: 0.24, gain: 0.055, comic: true },
       scroll: { notes: [1080, 860, 620], type: 'triangle', spacing: 0.045, duration: 0.2, gain: 0.03, slide: true },
       caught: { notes: [740, 294, 196, 146.83], type: 'square', spacing: 0.055, duration: 0.22, gain: 0.035 },
+      cage: { notes: [392, 196, 146.83, 110], type: 'triangle', spacing: 0.035, duration: 0.42, gain: 0.065 },
       coins: { notes: [987.77, 1318.51, 1567.98, 1174.66, 1760], type: 'sine', spacing: 0.07, duration: 0.18, gain: 0.04 },
     }
     const sound = sounds[name] ?? sounds.correct

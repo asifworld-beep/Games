@@ -1,5 +1,6 @@
 import Peer from 'peerjs'
 import { createChatId, createChatRecord } from '../chat/chatUtils.js'
+import { INVESTIGATOR_ROLE, SUSPECT_ROLES } from '../game.js'
 
 const ROOM_PREFIX = 'rmcs-'
 
@@ -24,6 +25,15 @@ export class MultiplayerManager {
     this.isHost = false
     this.localPlayer = null
     this.closed = false
+    this.maxPlayers = 4
+  }
+
+  setMaxPlayers(count) {
+    this.maxPlayers = count === 5 ? 5 : 4
+    if (this.isHost && this.roomCode) {
+      this.broadcast({ type: 'room', roomCode: this.roomCode, players: this.players, playerCount: this.maxPlayers })
+      this.notifyRoom()
+    }
   }
 
   async createRoom(player) {
@@ -89,7 +99,12 @@ export class MultiplayerManager {
   acceptConnection(connection) {
     connection.once('open', () => {
       this.bindConnection(connection, true)
-      connection.send({ type: 'room', roomCode: this.roomCode, players: this.players })
+      connection.send({
+        type: 'room',
+        roomCode: this.roomCode,
+        players: this.players,
+        playerCount: this.maxPlayers,
+      })
     })
   }
 
@@ -97,10 +112,10 @@ export class MultiplayerManager {
     connection.on('data', (data) => {
       if (!data || typeof data !== 'object') return
       if (hostSide && data.type === 'join') {
-        if (this.players.length < 4 && !this.players.some(({ id }) => id === connection.peer)) {
+        if (this.players.length < this.maxPlayers && !this.players.some(({ id }) => id === connection.peer)) {
           this.players = [...this.players, safePlayerIdentity(data.player, connection.peer)]
         }
-        this.broadcast({ type: 'room', roomCode: this.roomCode, players: this.players })
+        this.broadcast({ type: 'room', roomCode: this.roomCode, players: this.players, playerCount: this.maxPlayers })
         this.notifyRoom()
         return
       }
@@ -128,13 +143,14 @@ export class MultiplayerManager {
       if (hostSide && data.type === 'leave') {
         this.players = this.players.filter(({ id }) => id !== connection.peer)
         this.connections.delete(connection.peer)
-        this.broadcast({ type: 'room', roomCode: this.roomCode, players: this.players })
+        this.broadcast({ type: 'room', roomCode: this.roomCode, players: this.players, playerCount: this.maxPlayers })
         this.notifyRoom()
         return
       }
       if (!hostSide && data.type === 'room') {
         this.roomCode = data.roomCode
         this.players = data.players ?? []
+        this.setMaxPlayers(data.playerCount)
         this.notifyRoom()
         return
       }
@@ -145,7 +161,7 @@ export class MultiplayerManager {
       this.connections.delete(connection.peer)
       if (hostSide) {
         this.players = this.players.filter(({ id }) => id !== connection.peer)
-        this.broadcast({ type: 'room', roomCode: this.roomCode, players: this.players })
+        this.broadcast({ type: 'room', roomCode: this.roomCode, players: this.players, playerCount: this.maxPlayers })
         this.notifyRoom()
       } else {
         this.onStatus('disconnected')
@@ -156,7 +172,7 @@ export class MultiplayerManager {
       this.connections.delete(connection.peer)
       if (hostSide) {
         this.players = this.players.filter(({ id }) => id !== connection.peer)
-        this.broadcast({ type: 'room', roomCode: this.roomCode, players: this.players })
+        this.broadcast({ type: 'room', roomCode: this.roomCode, players: this.players, playerCount: this.maxPlayers })
         this.notifyRoom()
       } else {
         this.onStatus('disconnected')
@@ -195,7 +211,12 @@ export class MultiplayerManager {
       )
       this.sendTo(player.id, {
         type: 'game-state',
-        game: { ...game, roles: safeRoles },
+        game: {
+          ...game,
+          roles: safeRoles,
+          investigatorRole: INVESTIGATOR_ROLE,
+          suspectRoles: [...SUSPECT_ROLES],
+        },
         actorId: player.id,
       })
     }
@@ -207,17 +228,23 @@ export class MultiplayerManager {
     }
   }
 
-  addBots() {
-    while (this.players.length < 4) {
+  addBots(count = this.maxPlayers) {
+    this.setMaxPlayers(count)
+    while (this.players.length < this.maxPlayers) {
       const index = this.players.length + 1
       this.players.push({ id: `bot-${index}`, name: `Palace Bot ${index}`, human: false })
     }
-    this.broadcast({ type: 'room', roomCode: this.roomCode, players: this.players })
+    this.broadcast({ type: 'room', roomCode: this.roomCode, players: this.players, playerCount: this.maxPlayers })
     this.notifyRoom()
   }
 
   notifyRoom() {
-    this.onRoomUpdate({ roomCode: this.roomCode, players: [...this.players], isHost: this.isHost })
+    this.onRoomUpdate({
+      roomCode: this.roomCode,
+      players: [...this.players],
+      isHost: this.isHost,
+      playerCount: this.maxPlayers,
+    })
   }
 
   async close() {
